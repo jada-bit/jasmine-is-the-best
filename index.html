@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spring Sprint: April 1st Lean-Out</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+        .animate-in { animation: fadeIn 0.5s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .heart-beat { animation: beat 2s infinite; }
+        @keyframes beat { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+    </style>
+</head>
+<body class="bg-[#F8FAFC]">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useMemo, useEffect } = React;
+
+        const LucideIcon = ({ name, size = 24, className = "" }) => {
+            useEffect(() => { if (window.lucide) window.lucide.createIcons(); }, [name]);
+            return <i data-lucide={name} className={className} style={{ width: size, height: size, display: 'inline-block' }}></i>;
+        };
+
+        const PLAN_DATA = {
+            phases: [
+                {
+                    name: "Phase 1: Metabolic Baseline (Weeks 1-4)",
+                    weeks: Array.from({ length: 4 }, (_, i) => ({
+                        id: 1 + i,
+                        workouts: {
+                            Monday: { title: "Push Day (PF Machine/DB)", items: ["Daily 1-Mile Run (Mandatory)", "Chest Press Machine (3x12)", "Dumbbell Lateral Raises (3x15)", "Cable Tricep Pushdowns (3x15)", "Incline DB Press (3x10)", "Push-ups (3 to failure)"] },
+                            Tuesday: { title: "Pull Day (Back/Biceps)", items: ["Daily 1-Mile Run (Mandatory)", "Lat Pulldown Machine (4x10)", "Seated Cable Row (3x12)", "DB Bicep Curls (3x12)", "Face Pulls (3x15)", "Hammer Curls (3x12)"] },
+                            Wednesday: { title: "Legs - Quad Focus", items: ["Daily 1-Mile Run (Mandatory)", "Leg Press Machine (4x15)", "Goblet Squats (3x12)", "Leg Extension Machine (3x15)", "Walking Lunges (3x20 total)", "Plank (3x45s)"] },
+                            Thursday: { title: "Active Recovery / Mobility", items: ["Daily 1-Mile Run (Mandatory)", "20 min Stretching", "Foam Roll Lats/Quads"] },
+                            Friday: { title: "Legs - Ham/Glute Focus", items: ["Daily 1-Mile Run (Mandatory)", "Smith Machine RDLs (4x12)", "Leg Curl Machine (3x15)", "Dumbbell Glute Bridges (3x20)", "Calf Raises (4x20)"] },
+                            Saturday: { title: "Full Body High Intensity", items: ["Daily 1-Mile Run (Mandatory)", "DB Thrusters (3x12)", "Renegade Rows (3x10/ea)", "Mountain Climbers (3x45s)", "Burpees (3x10)"] },
+                            Sunday: { title: "Rest & Prep", items: ["Daily 1-Mile Run (Mandatory)", "Long Walk (30 min)", "Meal Prep: Fiber focus"] }
+                        },
+                        meals: {
+                            Breakfast: "Overnight Oats (1/2 cup) + 1 tbsp Chia Seeds + Berries (Heart Healthy)",
+                            Lunch: "Large Mediterranean Salad: Chickpeas, Quinoa, Cucumber, Spinach, Grilled Chicken (5oz), Olive Oil",
+                            Dinner: "Baked Salmon (6oz) + Roasted Asparagus + 1/2 Sweet Potato (Omega-3 Focus)",
+                            Snacks: "Apple + Handful of Walnuts (Good for Cholesterol) / 0% Greek Yogurt"
+                        }
+                    }))
+                },
+                {
+                    name: "Phase 2: Lean Shred (Weeks 5-11)",
+                    weeks: Array.from({ length: 7 }, (_, i) => ({
+                        id: 5 + i,
+                        workouts: {
+                            Monday: { title: "Upper Power Circuit", items: ["Daily 1-Mile Run (Mandatory)", "DB Chest Press (4x8)", "DB Rows (4x8)", "Smith Machine Overhead Press (3x10)", "Dips (3x12)", "Plank Jacks (3x30)"] },
+                            Tuesday: { title: "Posterior Chain Intensity", items: ["Daily 1-Mile Run (Mandatory)", "Smith Machine Squats (4x10)", "DB RDLs (4x10)", "Cable Pull-throughs (3x15)", "Walking Lunges with DBs (3x24 steps)"] },
+                            Wednesday: { title: "Cardio + Core Blast", items: ["Daily 1-Mile Run (Mandatory)", "15 min Incline Walk (Level 10+)", "Hanging Leg Raises (3x15)", "Russian Twists (3x40)", "Bicycle Crunches (3x30)"] },
+                            Thursday: { title: "Upper Volume", items: ["Daily 1-Mile Run (Mandatory)", "Assisted Pull-up Machine (3x12)", "Cable Chest Flyes (3x15)", "Lat Pulldowns (3x15)", "Lateral Raises (4x20)"] },
+                            Friday: { title: "Leg Volume", items: ["Daily 1-Mile Run (Mandatory)", "Leg Press (4x20)", "Seated Leg Curls (4x15)", "Bulgarian Split Squats (3x10/ea)", "Calf Raises (4x20)"] },
+                            Saturday: { title: "Metabolic Conditioning", items: ["Daily 1-Mile Run (Mandatory)", "EMOM 20: 1) 15 Kbell Swings, 2) 12 Push-ups, 3) 15 Goblet Squats, 4) Rest"] },
+                            Sunday: { title: "Recovery", items: ["Daily 1-Mile Run (Mandatory)", "Gentle Yoga", "Cholesterol-friendly Prep"] }
+                        },
+                        meals: {
+                            Breakfast: "Scrambled Egg Whites (5) with Sautéed Spinach & Whole Grain Toast",
+                            Lunch: "Lentil Soup + Side Salad with Avocado & Walnuts",
+                            Dinner: "Grilled Turkey Burger (no bun) + Huge portion of Roasted Broccoli",
+                            Snacks: "Pear + Almonds / Low-fat Cottage Cheese with Flax Seeds"
+                        }
+                    }))
+                }
+            ]
+        };
+
+        const Countdown = () => {
+            const targetDate = new Date("2026-04-01T00:00:00");
+            const [timeLeft, setTimeLeft] = useState({ days: 0, hrs: 0, min: 0 });
+
+            useEffect(() => {
+                const timer = setInterval(() => {
+                    const diff = targetDate - new Date();
+                    if (diff <= 0) clearInterval(timer);
+                    else setTimeLeft({
+                        days: Math.floor(diff / 86400000),
+                        hrs: Math.floor((diff / 3600000) % 24),
+                        min: Math.floor((diff / 60000) % 60)
+                    });
+                }, 1000);
+                return () => clearInterval(timer);
+            }, []);
+
+            return (
+                <div className="flex justify-center gap-3 my-4">
+                    {[{l: "Days", v: timeLeft.days}, {l: "Hrs", v: timeLeft.hrs}, {l: "Min", v: timeLeft.min}].map((t, i) => (
+                        <div key={i} className="bg-white border-2 border-teal-100 rounded-2xl px-4 py-2 shadow-sm">
+                            <div className="text-2xl font-extrabold text-teal-600 leading-tight">{t.v}</div>
+                            <div className="text-[10px] font-bold text-slate-400 uppercase">{t.l}</div>
+                        </div>
+                    ))}
+                </div>
+            );
+        };
+
+        const App = () => {
+            const [activeTab, setActiveTab] = useState('tracker');
+            const [currentWeekId, setCurrentWeekId] = useState(1);
+            const [tasks, setTasks] = useState(() => JSON.parse(localStorage.getItem('leanout_tasks')) || {});
+            const [stats, setStats] = useState(() => JSON.parse(localStorage.getItem('leanout_stats')) || [{d: 'Start', w: '174'}]);
+
+            useEffect(() => localStorage.setItem('leanout_tasks', JSON.stringify(tasks)), [tasks]);
+            useEffect(() => localStorage.setItem('leanout_stats', JSON.stringify(stats)), [stats]);
+
+            const { phase, week } = useMemo(() => {
+                for (let p of PLAN_DATA.phases) {
+                    let w = p.weeks.find(x => x.id === currentWeekId);
+                    if (w) return { phase: p, week: w };
+                }
+            }, [currentWeekId]);
+
+            const toggleTask = (day, idx) => {
+                const key = `w${currentWeekId}-${day}-${idx}`;
+                setTasks(prev => ({ ...prev, [key]: !prev[key] }));
+            };
+
+            return (
+                <div className="min-h-screen bg-[#F8FAFC] pb-24 text-slate-900">
+                    <div className="max-w-4xl mx-auto px-4 pt-8">
+                        <header className="text-center mb-8">
+                            <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-teal-50 text-teal-700 rounded-full text-[10px] font-extrabold uppercase tracking-widest mb-4">
+                                <LucideIcon name="activity" size={14} className="heart-beat" />
+                                Goal: 162 lbs by April 1st
+                            </div>
+                            <h1 className="text-4xl md:text-6xl font-black tracking-tight text-slate-900">
+                                The <span className="text-teal-500">Spring</span> Shred
+                            </h1>
+                            <Countdown />
+                            <div className="flex justify-center gap-2 mt-6">
+                                <button onClick={() => setActiveTab('tracker')} className={`px-8 py-3 rounded-2xl text-sm font-bold transition-all ${activeTab === 'tracker' ? 'bg-teal-600 text-white shadow-lg' : 'bg-white text-slate-500'}`}>The Plan</button>
+                                <button onClick={() => setActiveTab('stats')} className={`px-8 py-3 rounded-2xl text-sm font-bold transition-all ${activeTab === 'stats' ? 'bg-teal-600 text-white shadow-lg' : 'bg-white text-slate-500'}`}>Progress</button>
+                            </div>
+                        </header>
+
+                        {activeTab === 'tracker' ? (
+                            <div className="space-y-6 animate-in">
+                                <div className="bg-white p-4 rounded-3xl shadow-sm border border-slate-100 flex items-center justify-between sticky top-4 z-20">
+                                    <button onClick={() => setCurrentWeekId(Math.max(1, currentWeekId - 1))} className="p-2"><LucideIcon name="chevron-left" className="text-teal-600"/></button>
+                                    <div className="text-center">
+                                        <p className="text-[10px] font-bold text-teal-400 uppercase tracking-widest">{phase.name}</p>
+                                        <h2 className="text-xl font-black">Week {currentWeekId}</h2>
+                                    </div>
+                                    <button onClick={() => setCurrentWeekId(Math.min(11, currentWeekId + 1))} className="p-2"><LucideIcon name="chevron-right" className="text-teal-600"/></button>
+                                </div>
+
+                                <div className="grid lg:grid-cols-2 gap-6">
+                                    <div className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100">
+                                        <div className="flex items-center gap-3 mb-8">
+                                            <div className="p-3 bg-teal-50 rounded-2xl text-teal-600"><LucideIcon name="dumbbell" /></div>
+                                            <h3 className="text-xl font-black">Planet Fitness Strength</h3>
+                                        </div>
+                                        <div className="space-y-10">
+                                            {Object.entries(week.workouts).map(([day, w]) => (
+                                                <div key={day}>
+                                                    <div className="flex justify-between items-baseline mb-3">
+                                                        <span className="text-xs font-black text-teal-500 uppercase">{day}</span>
+                                                        <span className="text-xs font-bold text-slate-400 italic">{w.title}</span>
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        {w.items.map((item, idx) => {
+                                                            const isDone = tasks[`w${currentWeekId}-${day}-${idx}`];
+                                                            const isMile = item.includes("1-Mile Run");
+                                                            return (
+                                                                <div key={idx} onClick={() => toggleTask(day, idx)} className={`flex items-center gap-4 p-3.5 rounded-2xl cursor-pointer border transition-all ${isDone ? 'bg-teal-50 border-teal-100' : 'bg-white border-slate-100'} ${isMile ? 'ring-2 ring-teal-500/20' : ''}`}>
+                                                                    <div className={`w-5 h-5 rounded-full flex items-center justify-center ${isDone ? 'bg-teal-500 text-white' : 'bg-slate-100 text-transparent'}`}><LucideIcon name="check" size={12}/></div>
+                                                                    <span className={`text-sm font-semibold ${isDone ? 'line-through opacity-50' : ''} ${isMile ? 'text-teal-700' : ''}`}>{item}</span>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-6">
+                                        <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100">
+                                            <div className="flex items-center gap-3 mb-8">
+                                                <div className="p-3 bg-rose-50 rounded-2xl text-rose-500"><LucideIcon name="heart" /></div>
+                                                <h3 className="text-xl font-black">Heart Healthy Fuel</h3>
+                                            </div>
+                                            <div className="grid gap-4">
+                                                {Object.entries(week.meals).map(([meal, desc]) => (
+                                                    <div key={meal} className="p-4 bg-slate-50 rounded-2xl">
+                                                        <p className="text-[10px] font-black text-teal-500 uppercase mb-1">{meal}</p>
+                                                        <p className="text-sm font-medium leading-relaxed">{desc}</p>
+                                                    </div>
+                                                ))}
+                                                <div className="mt-4 p-4 bg-teal-600 rounded-2xl text-white">
+                                                    <p className="text-xs font-bold opacity-80 uppercase mb-1">Focus Tip</p>
+                                                    <p className="text-sm font-bold">Fiber binds to cholesterol in the digestive system and drags it out of the body. Aim for 30g+ daily!</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 animate-in">
+                                <div className="flex justify-between items-center mb-10">
+                                    <h3 className="text-2xl font-black">Weight Log</h3>
+                                    <button onClick={() => setStats([...stats, {d: `Week ${currentWeekId}`, w: ''}])} className="bg-teal-600 text-white px-6 py-2.5 rounded-2xl text-sm font-black shadow-lg">Check In</button>
+                                </div>
+                                <div className="grid gap-4">
+                                    {stats.map((s, i) => (
+                                        <div key={i} className="flex items-center gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                                            <input className="bg-transparent font-black text-slate-400 w-1/2 outline-none" value={s.d} onChange={e => {
+                                                const n = [...stats]; n[i].d = e.target.value; setStats(n);
+                                            }} />
+                                            <div className="flex items-center gap-2 ml-auto">
+                                                <input type="number" placeholder="Weight" className="bg-white px-4 py-2 rounded-xl w-24 text-right font-black outline-none focus:ring-2 focus:ring-teal-300" value={s.w} onChange={e => {
+                                                    const n = [...stats]; n[i].w = e.target.value; setStats(n);
+                                                }} />
+                                                <span className="font-bold text-slate-400">lbs</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
