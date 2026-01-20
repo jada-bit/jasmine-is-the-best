@@ -1,691 +1,789 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  Activity, 
-  CheckCircle, 
-  Clock, 
-  Utensils, 
-  Calendar as CalendarIcon, 
-  Plus, 
-  Flame, 
-  Brain,
-  Trash2,
-  Menu,
-  X,
-  Dumbbell,
-  Zap,
-  Repeat,
-  BookOpen,
-  Settings as SettingsIcon,
-  Link2,
-  Smartphone,
-  Watch
-} from 'lucide-react';
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LifeOS for Jasmine</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <style>
+        body { background-color: #f8fafc; font-family: sans-serif; }
+        /* Smooth transitions */
+        .transition-all { transition-property: all; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 300ms; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
 
-// --- Components ---
+    <script type="text/babel">
+        const { useState, useEffect } = React;
 
-const Card = ({ children, className = "" }) => (
-  <div className={`bg-white rounded-2xl shadow-sm border border-slate-100 p-6 ${className}`}>
-    {children}
-  </div>
-);
-
-const ProgressBar = ({ current, total, color = "bg-blue-500" }) => {
-  const percentage = Math.min(100, Math.max(0, (current / total) * 100));
-  return (
-    <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden">
-      <div 
-        className={`h-full ${color} transition-all duration-500 ease-out`} 
-        style={{ width: `${percentage}%` }}
-      />
-    </div>
-  );
-};
-
-export default function LifeOS() {
-  // --- State ---
-  const [activeTab, setActiveTab] = useState('dashboard');
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [currentTime, setCurrentTime] = useState(new Date());
-
-  // Data State
-  const [fitness, setFitness] = useState({
-    completedWorkouts: [], 
-    streak: 14,
-    calories: 450,
-    recovery: 82, 
-    standHours: 8, 
-  });
-
-  const [mindfulness, setMindfulness] = useState({
-    devotional: false,
-    gratitude: false
-  });
-
-  const [nutrition, setNutrition] = useState({
-    water: 3, 
-    meals: [
-      { id: 1, name: 'Breakfast', complete: true },
-      { id: 2, name: 'Lunch', complete: false },
-      { id: 3, name: 'Dinner', complete: false },
-      { id: 4, name: 'Supplements', complete: false },
-    ]
-  });
-
-  const [tasks, setTasks] = useState([
-    { id: 1, text: 'Do the dishes', category: 'chores', complete: false },
-    { id: 2, text: 'Take out trash', category: 'chores', complete: false },
-    { id: 3, text: 'Email project manager', category: 'work', complete: true },
-    { id: 4, text: 'Call Mom', category: 'life', complete: false },
-  ]);
-
-  const [events, setEvents] = useState([
-    { id: 1, title: 'Deep Work Block', time: '09:00', duration: '2h', type: 'work' },
-    { id: 2, title: 'Lunch with Sarah', time: '12:30', duration: '1h', type: 'life' },
-    { id: 3, title: 'Dentist Appointment', time: '15:00', duration: '1h', type: 'health' },
-  ]);
-
-  const [integrations, setIntegrations] = useState({
-    whoop: true,
-    appleHealth: true
-  });
-
-  // Pre-defined recurring tasks
-  const taskPresets = [
-    { text: 'Weekly Laundry', category: 'chores' },
-    { text: 'Grocery Run', category: 'chores' },
-    { text: 'Pay Bills', category: 'life' },
-    { text: 'Water Plants', category: 'chores' },
-    { text: 'Refill Meds', category: 'health' },
-  ];
-
-  // --- Effects ---
-  useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 60000);
-    return () => clearInterval(timer);
-  }, []);
-
-  // Load/Save to LocalStorage
-  useEffect(() => {
-    const savedData = localStorage.getItem('lifeos-data');
-    if (savedData) {
-      const parsed = JSON.parse(savedData);
-      setFitness(parsed.fitness || fitness);
-      setTasks(parsed.tasks || tasks);
-      setNutrition(parsed.nutrition || nutrition);
-      setMindfulness(parsed.mindfulness || mindfulness);
-      setIntegrations(parsed.integrations || integrations);
-    }
-  }, []);
-
-  useEffect(() => {
-    const dataToSave = { fitness, tasks, nutrition, mindfulness, integrations };
-    localStorage.setItem('lifeos-data', JSON.stringify(dataToSave));
-  }, [fitness, tasks, nutrition, mindfulness, integrations]);
-
-  // --- Handlers ---
-
-  const toggleTask = (id) => {
-    setTasks(tasks.map(t => t.id === id ? { ...t, complete: !t.complete } : t));
-  };
-
-  const addTask = (text, category = 'general') => {
-    if (!text) return;
-    const newTask = {
-      id: Date.now(),
-      text,
-      category,
-      complete: false
-    };
-    setTasks([...tasks, newTask]);
-  };
-
-  const handleManualAdd = (e) => {
-    e.preventDefault();
-    addTask(e.target.elements.taskInput.value);
-    e.target.reset();
-  };
-
-  const toggleMeal = (id) => {
-    setNutrition({
-      ...nutrition,
-      meals: nutrition.meals.map(m => m.id === id ? { ...m, complete: !m.complete } : m)
-    });
-  };
-
-  const addWater = () => {
-    setNutrition({ ...nutrition, water: Math.min(nutrition.water + 1, 10) });
-  };
-
-  const toggleWorkout = (type) => {
-    const isCompleted = fitness.completedWorkouts.includes(type);
-    let newWorkouts;
-    let newStreak = fitness.streak;
-
-    if (isCompleted) {
-      newWorkouts = fitness.completedWorkouts.filter(w => w !== type);
-      if (fitness.completedWorkouts.length === 1) newStreak -= 1;
-    } else {
-      newWorkouts = [...fitness.completedWorkouts, type];
-      if (fitness.completedWorkouts.length === 0) newStreak += 1;
-    }
-    setFitness({ ...fitness, completedWorkouts: newWorkouts, streak: newStreak });
-  };
-
-  const toggleDevotional = () => {
-    setMindfulness(prev => ({ ...prev, devotional: !prev.devotional }));
-  };
-
-  const toggleIntegration = (key) => {
-    setIntegrations(prev => ({ ...prev, [key]: !prev[key] }));
-  };
-
-  const deleteTask = (id) => {
-    setTasks(tasks.filter(t => t.id !== id));
-  };
-
-  // --- Render Helpers ---
-
-  const getGreeting = () => {
-    const hour = currentTime.getHours();
-    if (hour < 12) return "Good Morning";
-    if (hour < 18) return "Good Afternoon";
-    return "Good Evening";
-  };
-
-  const calculateDailyProgress = () => {
-    const totalItems = tasks.length + nutrition.meals.length + 2; // +1 workout, +1 devotional
-    const completedItems = tasks.filter(t => t.complete).length + 
-                           nutrition.meals.filter(m => m.complete).length + 
-                           (fitness.completedWorkouts.length > 0 ? 1 : 0) +
-                           (mindfulness.devotional ? 1 : 0);
-    return Math.round((completedItems / totalItems) * 100);
-  };
-
-  // --- Views ---
-
-  const DashboardView = () => (
-    <div className="space-y-6">
-      {/* Hero Section */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="md:col-span-2 bg-gradient-to-br from-indigo-600 to-purple-700 rounded-3xl p-8 text-white shadow-xl flex flex-col justify-between relative overflow-hidden">
-          <div className="relative z-10">
-            <h1 className="text-3xl font-bold mb-2">{getGreeting()}, Athlete.</h1>
-            <p className="opacity-90">Your daily sync is at {calculateDailyProgress()}% completion.</p>
-            
-            <div className="mt-8 flex items-center space-x-4">
-              {integrations.whoop && (
-                <div className="bg-white/20 backdrop-blur-md rounded-xl p-4 flex flex-col items-center min-w-[100px] border border-white/10">
-                  <span className="text-2xl font-bold">{fitness.recovery}%</span>
-                  <div className="flex items-center space-x-1 opacity-80">
-                    <Activity size={10} />
-                    <span className="text-xs uppercase tracking-wider">Recovery</span>
-                  </div>
-                </div>
-              )}
-              <div className="bg-white/20 backdrop-blur-md rounded-xl p-4 flex flex-col items-center min-w-[100px] border border-white/10">
-                <span className="text-2xl font-bold">{events[0]?.time || "Done"}</span>
-                <span className="text-xs uppercase tracking-wider opacity-80">Next Up</span>
-              </div>
-            </div>
-          </div>
-          <Activity className="absolute right-[-20px] bottom-[-20px] w-64 h-64 text-white opacity-10" />
-        </div>
-
-        {/* Daily Movement Hub */}
-        <Card className={`flex flex-col text-center transition-all border-2 ${fitness.completedWorkouts.length > 0 ? 'border-green-500 bg-green-50/50' : 'border-slate-100'}`} >
-          <div className="flex justify-between items-start w-full mb-4">
-            <div className="text-left">
-              <h3 className="text-lg font-bold text-slate-800">Movement</h3>
-              <p className="text-slate-500 text-xs">{fitness.completedWorkouts.length > 0 ? "Active day!" : "Get moving"}</p>
-            </div>
-            <div className="flex items-center text-xs font-bold text-slate-700 bg-white px-2 py-1 rounded-full shadow-sm">
-               <Flame size={14} className="mr-1 text-orange-500" />
-               {fitness.streak} Days
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-2 gap-3 h-full">
-            <button 
-              onClick={() => toggleWorkout('run')}
-              className={`rounded-xl p-3 flex flex-col items-center justify-center transition-all ${fitness.completedWorkouts.includes('run') ? 'bg-green-500 text-white shadow-md' : 'bg-white border border-slate-200 hover:border-green-400 text-slate-600'}`}>
-              <Activity size={20} className="mb-1" />
-              <span className="text-xs font-bold">Run</span>
-            </button>
-            <button 
-              onClick={() => toggleWorkout('strength')}
-              className={`rounded-xl p-3 flex flex-col items-center justify-center transition-all ${fitness.completedWorkouts.includes('strength') ? 'bg-blue-500 text-white shadow-md' : 'bg-white border border-slate-200 hover:border-blue-400 text-slate-600'}`}>
-              <Dumbbell size={20} className="mb-1" />
-              <span className="text-xs font-bold">Lift</span>
-            </button>
-            <button 
-              onClick={() => toggleWorkout('yoga')}
-              className={`rounded-xl p-3 flex flex-col items-center justify-center transition-all ${fitness.completedWorkouts.includes('yoga') ? 'bg-purple-500 text-white shadow-md' : 'bg-white border border-slate-200 hover:border-purple-400 text-slate-600'}`}>
-              <Zap size={20} className="mb-1" />
-              <span className="text-xs font-bold">Yoga</span>
-            </button>
-            <button 
-              onClick={() => toggleWorkout('other')}
-              className={`rounded-xl p-3 flex flex-col items-center justify-center transition-all ${fitness.completedWorkouts.includes('other') ? 'bg-orange-500 text-white shadow-md' : 'bg-white border border-slate-200 hover:border-orange-400 text-slate-600'}`}>
-              <Plus size={20} className="mb-1" />
-              <span className="text-xs font-bold">Other</span>
-            </button>
-          </div>
-        </Card>
-      </div>
-
-      {/* Second Row Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        
-        {/* Devotional Card */}
-        <Card className={`relative overflow-hidden transition-all duration-300 ${mindfulness.devotional ? 'bg-indigo-50 border-indigo-200' : ''}`}>
-           <div className="flex justify-between items-start mb-4">
-            <h3 className="font-bold text-slate-800 flex items-center">
-              <BookOpen className="w-5 h-5 mr-2 text-indigo-500" /> Spirit
-            </h3>
-          </div>
-          <div 
-            onClick={toggleDevotional}
-            className={`cursor-pointer rounded-xl p-4 flex flex-col items-center justify-center text-center transition-all border-2 ${mindfulness.devotional ? 'bg-indigo-500 border-indigo-500 text-white shadow-md' : 'bg-white border-dashed border-slate-300 hover:border-indigo-300 text-slate-400'}`}
-          >
-            <BookOpen size={24} className="mb-2" />
-            <span className="font-bold text-sm">{mindfulness.devotional ? "Devotional Read" : "Read Daily Devotional"}</span>
-          </div>
-        </Card>
-
-        {/* Priorities */}
-        <Card>
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="font-bold text-slate-800 flex items-center">
-              <CheckCircle className="w-5 h-5 mr-2 text-blue-500" /> Priorities
-            </h3>
-            <span className="text-xs font-medium bg-blue-100 text-blue-800 px-2 py-1 rounded-full">{tasks.filter(t => !t.complete).length}</span>
-          </div>
-          <div className="space-y-3">
-            {tasks.slice(0, 3).map(task => (
-              <div key={task.id} className="flex items-center group">
-                <button 
-                  onClick={() => toggleTask(task.id)}
-                  className={`w-4 h-4 rounded border mr-2 flex items-center justify-center transition-colors ${task.complete ? 'bg-blue-500 border-blue-500' : 'border-slate-300 hover:border-blue-400'}`}
-                >
-                  {task.complete && <CheckCircle className="w-3 h-3 text-white" />}
-                </button>
-                <span className={`text-xs truncate ${task.complete ? 'text-slate-400 line-through' : 'text-slate-700'}`}>
-                  {task.text}
-                </span>
-              </div>
-            ))}
-          </div>
-        </Card>
-
-        {/* Calendar Preview */}
-        <Card>
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="font-bold text-slate-800 flex items-center">
-              <Clock className="w-5 h-5 mr-2 text-purple-500" /> Next
-            </h3>
-          </div>
-          <div className="space-y-4">
-             {events.slice(0, 2).map((evt, idx) => (
-               <div key={idx} className="flex flex-col border-l-2 border-purple-200 pl-3">
-                 <span className="text-xs font-bold text-slate-500">{evt.time}</span>
-                 <span className="text-sm font-semibold text-slate-800 truncate">{evt.title}</span>
-               </div>
-             ))}
-          </div>
-        </Card>
-
-        {/* Nutrition Snapshot */}
-        <Card>
-           <div className="flex justify-between items-center mb-4">
-            <h3 className="font-bold text-slate-800 flex items-center">
-              <Utensils className="w-5 h-5 mr-2 text-green-500" /> Fuel
-            </h3>
-          </div>
-          <div className="flex flex-col space-y-4">
-            <div>
-              <div className="flex justify-between text-xs text-slate-500 mb-1">
-                <span>Water</span>
-                <span>{nutrition.water}/8</span>
-              </div>
-              <div className="flex space-x-1">
-                {[...Array(5)].map((_, i) => (
-                  <div key={i} className={`h-6 flex-1 rounded-md ${i < nutrition.water ? 'bg-blue-400' : 'bg-slate-100'}`} />
-                ))}
-              </div>
-            </div>
-             <div className="flex justify-between items-center">
-              <span className="text-xs text-slate-500 uppercase">Meals</span>
-              <span className="font-bold text-slate-800">
-                {nutrition.meals.filter(m => m.complete).length} / {nutrition.meals.length}
-              </span>
-            </div>
-          </div>
-        </Card>
-      </div>
-    </div>
-  );
-
-  const SettingsView = () => (
-    <div className="max-w-2xl mx-auto space-y-6">
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-8">
-        <h2 className="text-2xl font-bold text-slate-800 mb-2">Integrations</h2>
-        <p className="text-slate-500 mb-8">Connect your devices to sync fitness and recovery data automatically.</p>
-
-        <div className="space-y-6">
-          {/* Whoop Integration */}
-          <div className="flex items-center justify-between p-4 border border-slate-100 rounded-xl hover:border-slate-200 transition">
-             <div className="flex items-center space-x-4">
-               <div className="bg-black text-white p-3 rounded-lg">
-                 <Activity size={24} />
-               </div>
-               <div>
-                 <h3 className="font-bold text-slate-900">Whoop</h3>
-                 <p className="text-sm text-slate-500">Syncs recovery, sleep, and strain.</p>
-               </div>
-             </div>
-             <button 
-               onClick={() => toggleIntegration('whoop')}
-               className={`px-4 py-2 rounded-lg font-bold text-sm transition-all ${integrations.whoop ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
-             >
-               {integrations.whoop ? 'Connected' : 'Connect'}
-             </button>
-          </div>
-
-          {/* Apple Health Integration */}
-          <div className="flex items-center justify-between p-4 border border-slate-100 rounded-xl hover:border-slate-200 transition">
-             <div className="flex items-center space-x-4">
-               <div className="bg-white border border-slate-200 text-black p-3 rounded-lg">
-                 <div className="relative">
-                   <Activity className="absolute text-blue-400 -top-1 -right-1" size={12} />
-                   <Activity className="text-green-500" size={24} />
-                 </div>
-               </div>
-               <div>
-                 <h3 className="font-bold text-slate-900">Apple Health</h3>
-                 <p className="text-sm text-slate-500">Syncs rings, steps, and workouts.</p>
-               </div>
-             </div>
-             <button 
-               onClick={() => toggleIntegration('appleHealth')}
-               className={`px-4 py-2 rounded-lg font-bold text-sm transition-all ${integrations.appleHealth ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
-             >
-               {integrations.appleHealth ? 'Connected' : 'Connect'}
-             </button>
-          </div>
-
-           <div className="p-4 bg-yellow-50 text-yellow-800 rounded-xl text-sm flex items-start">
-             <Link2 size={16} className="mt-1 mr-2 flex-shrink-0" />
-             <p>Note: In a production environment, this would redirect you to login with Whoop and authorize Apple HealthKit permissions on your device.</p>
-           </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  const TasksView = () => (
-    <div className="max-w-3xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-slate-800">Master List</h2>
-        <span className="text-sm bg-slate-100 px-3 py-1 rounded-full text-slate-600">
-          {tasks.filter(t => t.complete).length}/{tasks.length} Completed
-        </span>
-      </div>
-
-      {/* Quick Add Presets (Forget-me-nots) */}
-      <div>
-        <div className="flex items-center text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
-          <Repeat size={12} className="mr-1" /> Quick Add Regulars
-        </div>
-        <div className="flex flex-wrap gap-2 mb-6">
-          {taskPresets.map((preset, idx) => (
-            <button
-              key={idx}
-              onClick={() => addTask(preset.text, preset.category)}
-              className="px-3 py-1.5 rounded-full text-sm font-medium bg-white border border-slate-200 text-slate-600 hover:bg-indigo-50 hover:border-indigo-200 hover:text-indigo-600 transition flex items-center"
+        // --- Icons (Inline SVGs to avoid dependencies) ---
+        const IconBase = ({ path, size = 24, className = "" }) => (
+            <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                width={size} 
+                height={size} 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                className={className}
             >
-              <Plus size={14} className="mr-1" /> {preset.text}
-            </button>
-          ))}
-        </div>
-      </div>
+                {path}
+            </svg>
+        );
 
-      <form onSubmit={handleManualAdd} className="relative">
-        <input 
-          name="taskInput"
-          type="text" 
-          placeholder="Add a new task..." 
-          className="w-full pl-4 pr-12 py-4 rounded-xl shadow-sm border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        <button type="submit" className="absolute right-2 top-2 p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
-          <Plus size={20} />
-        </button>
-      </form>
+        const Icons = {
+            Activity: (props) => <IconBase {...props} path={<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>} />,
+            CheckCircle: (props) => <IconBase {...props} path={<><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></>} />,
+            Clock: (props) => <IconBase {...props} path={<><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></>} />,
+            Utensils: (props) => <IconBase {...props} path={<><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"></path><path d="M7 2v20"></path><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"></path></>} />,
+            Calendar: (props) => <IconBase {...props} path={<><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></>} />,
+            Plus: (props) => <IconBase {...props} path={<><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></>} />,
+            Flame: (props) => <IconBase {...props} path={<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path>} />,
+            Brain: (props) => <IconBase {...props} path={<path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"></path>} />,
+            Trash2: (props) => <IconBase {...props} path={<><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></>} />,
+            Menu: (props) => <IconBase {...props} path={<><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></>} />,
+            X: (props) => <IconBase {...props} path={<><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></>} />,
+            Dumbbell: (props) => <IconBase {...props} path={<><path d="m6.5 6.5 11 11"></path><path d="m21 21-1-1"></path><path d="m3 3 1 1"></path><path d="m18 22 4-4"></path><path d="m2 6 4-4"></path><path d="m3 10 7-7"></path><path d="m14 21 7-7"></path></>} />,
+            Zap: (props) => <IconBase {...props} path={<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>} />,
+            Repeat: (props) => <IconBase {...props} path={<><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></>} />,
+            BookOpen: (props) => <IconBase {...props} path={<><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></>} />,
+            Settings: (props) => <IconBase {...props} path={<><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></>} />,
+            Link2: (props) => <IconBase {...props} path={<><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></>} />,
+            Flag: (props) => <IconBase {...props} path={<><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></>} />,
+            Smartphone: (props) => <IconBase {...props} path={<><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></>} />,
+            Watch: (props) => <IconBase {...props} path={<><circle cx="12" cy="12" r="7"></circle><polyline points="12 9 12 12 13.5 13.5"></polyline><path d="M16.51 17.35l-.35 3.83a2 2 0 0 1-2 1.82H9.83a2 2 0 0 1-2-1.82l-.35-3.83m.01-10.7l.35-3.83A2 2 0 0 1 9.83 1h4.35a2 2 0 0 1 2 1.82l.35 3.83"></path></>} />
+        };
 
-      <div className="grid gap-4">
-        {['chores', 'work', 'life', 'general', 'health'].map(cat => {
-           const catTasks = tasks.filter(t => t.category === cat);
-           if (catTasks.length === 0) return null;
-           
-           return (
-             <div key={cat} className="space-y-2">
-               <h3 className="text-xs font-bold uppercase text-slate-400 tracking-wider ml-1 mt-4 mb-2">{cat}</h3>
-               {catTasks.map(task => (
-                 <div key={task.id} className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between group hover:border-blue-200 transition">
-                   <div className="flex items-center flex-1" onClick={() => toggleTask(task.id)}>
-                      <div className={`cursor-pointer w-6 h-6 rounded-full border-2 mr-4 flex items-center justify-center transition-all ${task.complete ? 'bg-blue-500 border-blue-500' : 'border-slate-300 hover:border-blue-400'}`}>
-                        {task.complete && <CheckCircle className="w-4 h-4 text-white" />}
-                      </div>
-                      <span className={`text-lg transition-all ${task.complete ? 'text-slate-300 line-through' : 'text-slate-800'}`}>
-                        {task.text}
-                      </span>
-                   </div>
-                   <button onClick={() => deleteTask(task.id)} className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition">
-                     <Trash2 size={18} />
-                   </button>
-                 </div>
-               ))}
-             </div>
-           )
-        })}
-      </div>
-    </div>
-  );
+        // --- Components ---
 
-  const CalendarView = () => (
-    <div className="max-w-4xl mx-auto h-[600px] flex flex-col md:flex-row gap-6">
-       <div className="flex-1 bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col">
-         <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-purple-50">
-           <div>
-             <h2 className="text-xl font-bold text-slate-800">Today's Agenda</h2>
-             <p className="text-sm text-slate-500">{currentTime.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</p>
-           </div>
-           <CalendarIcon className="text-purple-400 opacity-50 w-8 h-8" />
-         </div>
-         
-         <div className="flex-1 overflow-y-auto p-4 space-y-4">
-           {/* Time Slots */}
-           {[9, 10, 11, 12, 13, 14, 15, 16, 17, 18].map(hour => {
-             const timeString = `${hour}:00`;
-             const event = events.find(e => parseInt(e.time.split(':')[0]) === hour);
-             
-             return (
-               <div key={hour} className="flex group min-h-[80px]">
-                 <div className="w-16 text-xs text-slate-400 font-medium pt-2 text-right pr-4 border-r border-slate-100">
-                   {hour > 12 ? `${hour-12} PM` : `${hour} AM`}
-                 </div>
-                 <div className="flex-1 pl-4 py-1 relative">
-                    <div className="absolute top-0 left-0 w-full h-[1px] bg-slate-50 group-first:hidden"></div>
-                    {event ? (
-                      <div className={`p-3 rounded-lg border-l-4 shadow-sm ${
-                        event.type === 'work' ? 'bg-blue-50 border-blue-500 text-blue-900' :
-                        event.type === 'health' ? 'bg-green-50 border-green-500 text-green-900' :
-                        'bg-purple-50 border-purple-500 text-purple-900'
-                      }`}>
-                        <div className="font-bold">{event.title}</div>
-                        <div className="text-xs opacity-75">{event.time} • {event.duration}</div>
-                      </div>
-                    ) : (
-                      <div className="h-full rounded-lg border-2 border-dashed border-slate-100 hover:border-slate-200 transition flex items-center justify-center opacity-0 hover:opacity-100 cursor-pointer">
-                        <span className="text-xs text-slate-400">+ Add Event</span>
-                      </div>
-                    )}
-                 </div>
-               </div>
-             )
-           })}
-         </div>
-       </div>
-    </div>
-  );
-
-  const NutritionView = () => (
-    <div className="max-w-3xl mx-auto grid gap-6">
-       <Card className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white">
-         <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-bold">Hydration Tracker</h2>
-              <p className="text-cyan-100">Goal: 8 cups a day</p>
+        const Card = ({ children, className = "" }) => (
+            <div className={`bg-white rounded-2xl shadow-sm border border-slate-100 p-6 ${className}`}>
+                {children}
             </div>
-            <div className="text-4xl font-bold">{nutrition.water}<span className="text-lg opacity-60">/8</span></div>
-         </div>
-         <div className="mt-6 flex justify-center space-x-4">
-            <button 
-              onClick={addWater}
-              className="bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full w-16 h-16 flex items-center justify-center transition active:scale-95">
-              <Plus size={32} />
-            </button>
-         </div>
-         <div className="mt-8 grid grid-cols-8 gap-2">
-           {[...Array(8)].map((_, i) => (
-             <div key={i} className={`h-12 rounded-lg transition-all duration-500 ${i < nutrition.water ? 'bg-white' : 'bg-black/20'}`} />
-           ))}
-         </div>
-       </Card>
+        );
 
-       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-         <Card>
-           <h3 className="font-bold text-slate-800 mb-4 flex items-center">
-             <Utensils className="mr-2 text-orange-500" /> Meal Log
-           </h3>
-           <div className="space-y-3">
-             {nutrition.meals.map(meal => (
-               <div 
-                 key={meal.id} 
-                 onClick={() => toggleMeal(meal.id)}
-                 className={`p-4 rounded-xl border-2 cursor-pointer transition flex items-center justify-between ${meal.complete ? 'border-green-500 bg-green-50' : 'border-slate-100 hover:border-orange-200'}`}
-               >
-                 <span className={`font-medium ${meal.complete ? 'text-green-700' : 'text-slate-700'}`}>{meal.name}</span>
-                 {meal.complete && <CheckCircle size={20} className="text-green-600" />}
-               </div>
-             ))}
-           </div>
-         </Card>
+        const ProgressBar = ({ current, total, color = "bg-blue-500" }) => {
+            const percentage = Math.min(100, Math.max(0, (current / total) * 100));
+            return (
+                <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden">
+                    <div 
+                        className={`h-full ${color} transition-all duration-500 ease-out`} 
+                        style={{ width: `${percentage}%` }}
+                    />
+                </div>
+            );
+        };
 
-         <Card className={`flex flex-col justify-center items-center text-center p-8 text-white relative overflow-hidden transition-all ${integrations.appleHealth ? 'bg-slate-900' : 'bg-slate-300'}`}>
-            {!integrations.appleHealth && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/10 backdrop-blur-sm z-10">
-                <div className="text-slate-800 font-bold bg-white px-4 py-2 rounded-lg shadow-lg">Apple Health Not Connected</div>
-              </div>
-            )}
-            <h3 className="text-lg font-medium text-slate-300 mb-2">Daily Caloric Burn</h3>
-            <div className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-pink-500 mb-4">
-              {fitness.calories}
-            </div>
-            <div className="text-sm text-slate-400 mb-6">Synced from Watch</div>
-            <div className="w-full space-y-2">
-              <div className="flex justify-between text-xs text-slate-400">
-                <span>Move</span>
-                <span>75%</span>
-              </div>
-              <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
-                <div className="h-full w-3/4 bg-pink-500"></div>
-              </div>
-              
-              <div className="flex justify-between text-xs text-slate-400 pt-2">
-                <span>Stand</span>
-                <span>{fitness.standHours}/12 hrs</span>
-              </div>
-              <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
-                <div className="h-full w-2/3 bg-blue-500"></div>
-              </div>
-            </div>
-         </Card>
-       </div>
-    </div>
-  );
+        function LifeOS() {
+            // --- State ---
+            const [activeTab, setActiveTab] = useState('dashboard');
+            const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+            const [currentTime, setCurrentTime] = useState(new Date());
 
-  // --- Main Layout ---
+            // Data State
+            const [fitness, setFitness] = useState({
+                completedWorkouts: [], 
+                streak: 14,
+                calories: 450,
+                recovery: 82, 
+                standHours: 8, 
+            });
 
-  const NavItem = ({ id, icon: Icon, label }) => (
-    <button
-      onClick={() => { setActiveTab(id); setIsMobileMenuOpen(false); }}
-      className={`flex items-center space-x-3 w-full p-3 rounded-xl transition-all duration-200 ${
-        activeTab === id 
-        ? 'bg-slate-900 text-white shadow-lg' 
-        : 'text-slate-500 hover:bg-slate-100'
-      }`}
-    >
-      <Icon size={20} />
-      <span className="font-medium">{label}</span>
-    </button>
-  );
+            const [mindfulness, setMindfulness] = useState({
+                devotional: false,
+                gratitude: false
+            });
 
-  return (
-    <div className="min-h-screen bg-slate-50 flex font-sans text-slate-900">
-      
-      {/* Mobile Header */}
-      <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b border-slate-200 z-50 flex items-center justify-between px-4">
-        <div className="flex items-center space-x-2">
-          <Brain className="text-indigo-600" />
-          <span className="font-bold text-xl">LifeOS</span>
-        </div>
-        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2">
-          {isMobileMenuOpen ? <X /> : <Menu />}
-        </button>
-      </div>
+            const [nutrition, setNutrition] = useState({
+                water: 3, 
+                meals: [
+                    { id: 1, name: 'Breakfast', complete: true },
+                    { id: 2, name: 'Lunch', complete: false },
+                    { id: 3, name: 'Dinner', complete: false },
+                    { id: 4, name: 'Supplements', complete: false },
+                ]
+            });
 
-      {/* Sidebar Navigation */}
-      <aside className={`fixed md:sticky top-0 left-0 h-full w-64 bg-white border-r border-slate-200 z-40 transform transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? 'translate-x-0 pt-20' : '-translate-x-full pt-8'} md:translate-x-0 md:block`}>
-        <div className="px-6 mb-8 hidden md:flex items-center space-x-2">
-          <div className="bg-indigo-600 p-2 rounded-lg">
-            <Brain className="text-white w-6 h-6" />
-          </div>
-          <span className="font-bold text-2xl tracking-tight">LifeOS</span>
-        </div>
+            const [golf, setGolf] = useState({
+                rounds: [
+                    { id: 1, date: '2023-10-15', course: 'Pine Valley', score: 92 },
+                    { id: 2, date: '2023-10-22', course: 'Sunny Side GC', score: 88 }
+                ]
+            });
 
-        <nav className="px-4 space-y-2">
-          <NavItem id="dashboard" icon={Activity} label="Dashboard" />
-          <NavItem id="tasks" icon={CheckCircle} label="Tasks & Chores" />
-          <NavItem id="calendar" icon={CalendarIcon} label="Calendar" />
-          <NavItem id="nutrition" icon={Utensils} label="Nutrition" />
-          <div className="pt-4 mt-4 border-t border-slate-100">
-            <NavItem id="settings" icon={SettingsIcon} label="Settings & Sync" />
-          </div>
-        </nav>
+            const [tasks, setTasks] = useState([
+                { id: 1, text: 'Do the dishes', category: 'chores', complete: false },
+                { id: 2, text: 'Take out trash', category: 'chores', complete: false },
+                { id: 3, text: 'Email project manager', category: 'work', complete: true },
+                { id: 4, text: 'Call Mom', category: 'life', complete: false },
+            ]);
 
-        <div className="absolute bottom-8 left-0 w-full px-6">
-          <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
-            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Daily Goal</h4>
-            <div className="flex justify-between items-end mb-2">
-              <span className="text-sm font-semibold text-slate-700">Completion</span>
-              <span className="text-xs text-indigo-600 font-bold">{calculateDailyProgress()}%</span>
-            </div>
-            <ProgressBar current={calculateDailyProgress()} total={100} color="bg-indigo-500" />
-          </div>
-        </div>
-      </aside>
+            const [events, setEvents] = useState([
+                { id: 1, title: 'Deep Work Block', time: '09:00', duration: '2h', type: 'work' },
+                { id: 2, title: 'Lunch with Sarah', time: '12:30', duration: '1h', type: 'life' },
+                { id: 3, title: 'Dentist Appointment', time: '15:00', duration: '1h', type: 'health' },
+            ]);
 
-      {/* Main Content Area */}
-      <main className="flex-1 p-4 md:p-8 pt-20 md:pt-8 overflow-y-auto h-screen">
-        <div className="max-w-6xl mx-auto">
-          {activeTab === 'dashboard' && <DashboardView />}
-          {activeTab === 'tasks' && <TasksView />}
-          {activeTab === 'calendar' && <CalendarView />}
-          {activeTab === 'nutrition' && <NutritionView />}
-          {activeTab === 'settings' && <SettingsView />}
-        </div>
-      </main>
+            const [integrations, setIntegrations] = useState({
+                whoop: true,
+                appleHealth: true
+            });
 
-    </div>
-  );
-}
+            // Pre-defined recurring tasks
+            const taskPresets = [
+                { text: 'Weekly Laundry', category: 'chores' },
+                { text: 'Grocery Run', category: 'chores' },
+                { text: 'Pay Bills', category: 'life' },
+                { text: 'Water Plants', category: 'chores' },
+                { text: 'Refill Meds', category: 'health' },
+            ];
+
+            // --- Effects ---
+            useEffect(() => {
+                const timer = setInterval(() => setCurrentTime(new Date()), 60000);
+                return () => clearInterval(timer);
+            }, []);
+
+            // Load/Save to LocalStorage
+            useEffect(() => {
+                const savedData = localStorage.getItem('lifeos-data');
+                if (savedData) {
+                    const parsed = JSON.parse(savedData);
+                    setFitness(parsed.fitness || fitness);
+                    setTasks(parsed.tasks || tasks);
+                    setNutrition(parsed.nutrition || nutrition);
+                    setMindfulness(parsed.mindfulness || mindfulness);
+                    setIntegrations(parsed.integrations || integrations);
+                    setGolf(parsed.golf || golf);
+                }
+            }, []);
+
+            useEffect(() => {
+                const dataToSave = { fitness, tasks, nutrition, mindfulness, integrations, golf };
+                localStorage.setItem('lifeos-data', JSON.stringify(dataToSave));
+            }, [fitness, tasks, nutrition, mindfulness, integrations, golf]);
+
+            // --- Handlers ---
+
+            const toggleTask = (id) => {
+                setTasks(tasks.map(t => t.id === id ? { ...t, complete: !t.complete } : t));
+            };
+
+            const addTask = (text, category = 'general') => {
+                if (!text) return;
+                const newTask = {
+                    id: Date.now(),
+                    text,
+                    category,
+                    complete: false
+                };
+                setTasks([...tasks, newTask]);
+            };
+
+            const handleManualAdd = (e) => {
+                e.preventDefault();
+                addTask(e.target.elements.taskInput.value);
+                e.target.reset();
+            };
+
+            const toggleMeal = (id) => {
+                setNutrition({
+                    ...nutrition,
+                    meals: nutrition.meals.map(m => m.id === id ? { ...m, complete: !m.complete } : m)
+                });
+            };
+
+            const addWater = () => {
+                setNutrition({ ...nutrition, water: Math.min(nutrition.water + 1, 10) });
+            };
+
+            const toggleWorkout = (type) => {
+                const isCompleted = fitness.completedWorkouts.includes(type);
+                let newWorkouts;
+                let newStreak = fitness.streak;
+
+                if (isCompleted) {
+                    newWorkouts = fitness.completedWorkouts.filter(w => w !== type);
+                    if (fitness.completedWorkouts.length === 1) newStreak -= 1;
+                } else {
+                    newWorkouts = [...fitness.completedWorkouts, type];
+                    if (fitness.completedWorkouts.length === 0) newStreak += 1;
+                }
+                setFitness({ ...fitness, completedWorkouts: newWorkouts, streak: newStreak });
+            };
+
+            const toggleDevotional = () => {
+                setMindfulness(prev => ({ ...prev, devotional: !prev.devotional }));
+            };
+
+            const toggleIntegration = (key) => {
+                setIntegrations(prev => ({ ...prev, [key]: !prev[key] }));
+            };
+
+            const deleteTask = (id) => {
+                setTasks(tasks.filter(t => t.id !== id));
+            };
+            
+            const addGolfRound = (e) => {
+                e.preventDefault();
+                const { course, score, date } = e.target.elements;
+                if(!course.value || !score.value) return;
+                
+                const newRound = {
+                    id: Date.now(),
+                    course: course.value,
+                    score: parseInt(score.value),
+                    date: date.value || new Date().toISOString().split('T')[0]
+                };
+                
+                setGolf(prev => ({
+                    ...prev,
+                    rounds: [newRound, ...prev.rounds]
+                }));
+                e.target.reset();
+            };
+            
+            const deleteGolfRound = (id) => {
+                setGolf(prev => ({
+                    ...prev,
+                    rounds: prev.rounds.filter(r => r.id !== id)
+                }));
+            };
+
+            // --- Render Helpers ---
+
+            const getGreeting = () => {
+                const hour = currentTime.getHours();
+                if (hour < 12) return "Good Morning";
+                if (hour < 18) return "Good Afternoon";
+                return "Good Evening";
+            };
+
+            const calculateDailyProgress = () => {
+                const totalItems = tasks.length + nutrition.meals.length + 2; 
+                const completedItems = tasks.filter(t => t.complete).length + 
+                                       nutrition.meals.filter(m => m.complete).length + 
+                                       (fitness.completedWorkouts.length > 0 ? 1 : 0) +
+                                       (mindfulness.devotional ? 1 : 0);
+                return Math.round((completedItems / totalItems) * 100);
+            };
+
+            // --- Views ---
+
+            const DashboardView = () => (
+                <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="md:col-span-2 bg-gradient-to-br from-indigo-600 to-purple-700 rounded-3xl p-8 text-white shadow-xl flex flex-col justify-between relative overflow-hidden">
+                            <div className="relative z-10">
+                                <h1 className="text-3xl font-bold mb-2">{getGreeting()}, Jasmine.</h1>
+                                <p className="opacity-90">Your daily sync is at {calculateDailyProgress()}% completion.</p>
+                                
+                                <div className="mt-8 flex items-center space-x-4">
+                                    {integrations.whoop && (
+                                        <div className="bg-white/20 backdrop-blur-md rounded-xl p-4 flex flex-col items-center min-w-[100px] border border-white/10">
+                                            <span className="text-2xl font-bold">{fitness.recovery}%</span>
+                                            <div className="flex items-center space-x-1 opacity-80">
+                                                <Icons.Activity size={10} />
+                                                <span className="text-xs uppercase tracking-wider">Recovery</span>
+                                            </div>
+                                        </div>
+                                    )}
+                                    <div className="bg-white/20 backdrop-blur-md rounded-xl p-4 flex flex-col items-center min-w-[100px] border border-white/10">
+                                        <span className="text-2xl font-bold">{events[0]?.time || "Done"}</span>
+                                        <span className="text-xs uppercase tracking-wider opacity-80">Next Up</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="absolute right-[-20px] bottom-[-20px] opacity-10 text-white">
+                                <Icons.Activity size={256} />
+                            </div>
+                        </div>
+
+                        <Card className={`flex flex-col text-center transition-all border-2 ${fitness.completedWorkouts.length > 0 ? 'border-green-500 bg-green-50/50' : 'border-slate-100'}`} >
+                            <div className="flex justify-between items-start w-full mb-4">
+                                <div className="text-left">
+                                    <h3 className="text-lg font-bold text-slate-800">Movement</h3>
+                                    <p className="text-slate-500 text-xs">{fitness.completedWorkouts.length > 0 ? "Active day!" : "Get moving"}</p>
+                                </div>
+                                <div className="flex items-center text-xs font-bold text-slate-700 bg-white px-2 py-1 rounded-full shadow-sm">
+                                   <Icons.Flame size={14} className="mr-1 text-orange-500" />
+                                   {fitness.streak} Days
+                                </div>
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-3 h-full">
+                                <button onClick={() => toggleWorkout('run')} className={`rounded-xl p-3 flex flex-col items-center justify-center transition-all ${fitness.completedWorkouts.includes('run') ? 'bg-green-500 text-white shadow-md' : 'bg-white border border-slate-200 hover:border-green-400 text-slate-600'}`}>
+                                    <Icons.Activity size={20} className="mb-1" />
+                                    <span className="text-xs font-bold">Run</span>
+                                </button>
+                                <button onClick={() => toggleWorkout('strength')} className={`rounded-xl p-3 flex flex-col items-center justify-center transition-all ${fitness.completedWorkouts.includes('strength') ? 'bg-blue-500 text-white shadow-md' : 'bg-white border border-slate-200 hover:border-blue-400 text-slate-600'}`}>
+                                    <Icons.Dumbbell size={20} className="mb-1" />
+                                    <span className="text-xs font-bold">Lift</span>
+                                </button>
+                                <button onClick={() => toggleWorkout('yoga')} className={`rounded-xl p-3 flex flex-col items-center justify-center transition-all ${fitness.completedWorkouts.includes('yoga') ? 'bg-purple-500 text-white shadow-md' : 'bg-white border border-slate-200 hover:border-purple-400 text-slate-600'}`}>
+                                    <Icons.Zap size={20} className="mb-1" />
+                                    <span className="text-xs font-bold">Yoga</span>
+                                </button>
+                                <button onClick={() => toggleWorkout('other')} className={`rounded-xl p-3 flex flex-col items-center justify-center transition-all ${fitness.completedWorkouts.includes('other') ? 'bg-orange-500 text-white shadow-md' : 'bg-white border border-slate-200 hover:border-orange-400 text-slate-600'}`}>
+                                    <Icons.Plus size={20} className="mb-1" />
+                                    <span className="text-xs font-bold">Other</span>
+                                </button>
+                            </div>
+                        </Card>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <Card className={`relative overflow-hidden transition-all duration-300 ${mindfulness.devotional ? 'bg-indigo-50 border-indigo-200' : ''}`}>
+                           <div className="flex justify-between items-start mb-4">
+                            <h3 className="font-bold text-slate-800 flex items-center">
+                              <Icons.BookOpen className="w-5 h-5 mr-2 text-indigo-500" /> Spirit
+                            </h3>
+                          </div>
+                          <div onClick={toggleDevotional} className={`cursor-pointer rounded-xl p-4 flex flex-col items-center justify-center text-center transition-all border-2 ${mindfulness.devotional ? 'bg-indigo-500 border-indigo-500 text-white shadow-md' : 'bg-white border-dashed border-slate-300 hover:border-indigo-300 text-slate-400'}`}>
+                            <Icons.BookOpen size={24} className="mb-2" />
+                            <span className="font-bold text-sm">{mindfulness.devotional ? "Devotional Read" : "Read Daily Devotional"}</span>
+                          </div>
+                        </Card>
+                        
+                        {/* Golf Summary Card */}
+                        <Card>
+                          <div className="flex justify-between items-center mb-4">
+                            <h3 className="font-bold text-slate-800 flex items-center">
+                              <Icons.Flag className="w-5 h-5 mr-2 text-green-600" /> Golf Progress
+                            </h3>
+                          </div>
+                          {golf.rounds.length > 0 ? (
+                            <div className="space-y-3">
+                                <div className="flex justify-between items-end">
+                                    <span className="text-sm text-slate-500">Best Score</span>
+                                    <span className="text-xl font-bold text-green-600">{Math.min(...golf.rounds.map(r => r.score))}</span>
+                                </div>
+                                <div className="flex justify-between items-end">
+                                    <span className="text-sm text-slate-500">Avg Score</span>
+                                    <span className="text-xl font-bold text-slate-800">{Math.round(golf.rounds.reduce((acc, curr) => acc + curr.score, 0) / golf.rounds.length)}</span>
+                                </div>
+                                <div className="pt-2 border-t border-slate-100 text-xs text-slate-400">
+                                    Last: {golf.rounds[0].score} @ {golf.rounds[0].course}
+                                </div>
+                            </div>
+                          ) : (
+                            <div className="text-center py-4 text-slate-400 text-sm">
+                                No rounds logged yet.
+                            </div>
+                          )}
+                        </Card>
+
+                        <Card>
+                          <div className="flex justify-between items-center mb-4">
+                            <h3 className="font-bold text-slate-800 flex items-center">
+                              <Icons.CheckCircle className="w-5 h-5 mr-2 text-blue-500" /> Priorities
+                            </h3>
+                            <span className="text-xs font-medium bg-blue-100 text-blue-800 px-2 py-1 rounded-full">{tasks.filter(t => !t.complete).length}</span>
+                          </div>
+                          <div className="space-y-3">
+                            {tasks.slice(0, 3).map(task => (
+                              <div key={task.id} className="flex items-center group">
+                                <button onClick={() => toggleTask(task.id)} className={`w-4 h-4 rounded border mr-2 flex items-center justify-center transition-colors ${task.complete ? 'bg-blue-500 border-blue-500' : 'border-slate-300 hover:border-blue-400'}`}>
+                                  {task.complete && <Icons.CheckCircle className="w-3 h-3 text-white" />}
+                                </button>
+                                <span className={`text-xs truncate ${task.complete ? 'text-slate-400 line-through' : 'text-slate-700'}`}>
+                                  {task.text}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </Card>
+
+                        <Card>
+                           <div className="flex justify-between items-center mb-4">
+                            <h3 className="font-bold text-slate-800 flex items-center">
+                              <Icons.Utensils className="w-5 h-5 mr-2 text-green-500" /> Fuel
+                            </h3>
+                          </div>
+                          <div className="flex flex-col space-y-4">
+                            <div>
+                              <div className="flex justify-between text-xs text-slate-500 mb-1">
+                                <span>Water</span>
+                                <span>{nutrition.water}/8</span>
+                              </div>
+                              <div className="flex space-x-1">
+                                {[...Array(5)].map((_, i) => (
+                                  <div key={i} className={`h-6 flex-1 rounded-md ${i < nutrition.water ? 'bg-blue-400' : 'bg-slate-100'}`} />
+                                ))}
+                              </div>
+                            </div>
+                             <div className="flex justify-between items-center">
+                              <span className="text-xs text-slate-500 uppercase">Meals</span>
+                              <span className="font-bold text-slate-800">
+                                {nutrition.meals.filter(m => m.complete).length} / {nutrition.meals.length}
+                              </span>
+                            </div>
+                          </div>
+                        </Card>
+                    </div>
+                </div>
+            );
+
+            const SettingsView = () => (
+                <div className="max-w-2xl mx-auto space-y-6">
+                    <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-8">
+                        <h2 className="text-2xl font-bold text-slate-800 mb-2">Integrations</h2>
+                        <p className="text-slate-500 mb-8">Connect your devices to sync fitness and recovery data automatically.</p>
+
+                        <div className="space-y-6">
+                            <div className="flex items-center justify-between p-4 border border-slate-100 rounded-xl hover:border-slate-200 transition">
+                                <div className="flex items-center space-x-4">
+                                    <div className="bg-black text-white p-3 rounded-lg">
+                                        <Icons.Activity size={24} />
+                                    </div>
+                                    <div>
+                                        <h3 className="font-bold text-slate-900">Whoop</h3>
+                                        <p className="text-sm text-slate-500">Syncs recovery, sleep, and strain.</p>
+                                    </div>
+                                </div>
+                                <button onClick={() => toggleIntegration('whoop')} className={`px-4 py-2 rounded-lg font-bold text-sm transition-all ${integrations.whoop ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
+                                    {integrations.whoop ? 'Connected' : 'Connect'}
+                                </button>
+                            </div>
+
+                            <div className="flex items-center justify-between p-4 border border-slate-100 rounded-xl hover:border-slate-200 transition">
+                                <div className="flex items-center space-x-4">
+                                    <div className="bg-white border border-slate-200 text-black p-3 rounded-lg">
+                                        <div className="relative">
+                                            <Icons.Activity className="text-green-500" size={24} />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <h3 className="font-bold text-slate-900">Apple Health</h3>
+                                        <p className="text-sm text-slate-500">Syncs rings, steps, and workouts.</p>
+                                    </div>
+                                </div>
+                                <button onClick={() => toggleIntegration('appleHealth')} className={`px-4 py-2 rounded-lg font-bold text-sm transition-all ${integrations.appleHealth ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
+                                    {integrations.appleHealth ? 'Connected' : 'Connect'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+            
+            const GolfView = () => {
+                const bestScore = golf.rounds.length > 0 ? Math.min(...golf.rounds.map(r => r.score)) : '-';
+                const avgScore = golf.rounds.length > 0 ? Math.round(golf.rounds.reduce((acc, curr) => acc + curr.score, 0) / golf.rounds.length) : '-';
+                
+                return (
+                    <div className="max-w-3xl mx-auto space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <Card className="bg-green-50 border-green-200">
+                                <h3 className="text-sm font-bold text-green-800 uppercase tracking-wider mb-1">Best Score</h3>
+                                <div className="text-3xl font-bold text-green-900">{bestScore}</div>
+                            </Card>
+                            <Card>
+                                <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-1">Average</h3>
+                                <div className="text-3xl font-bold text-slate-800">{avgScore}</div>
+                            </Card>
+                            <Card>
+                                <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-1">Rounds</h3>
+                                <div className="text-3xl font-bold text-slate-800">{golf.rounds.length}</div>
+                            </Card>
+                        </div>
+                        
+                        <Card>
+                            <h2 className="text-xl font-bold text-slate-800 mb-4">Log a Round</h2>
+                            <form onSubmit={addGolfRound} className="flex flex-col md:flex-row gap-4 items-end">
+                                <div className="flex-1 w-full">
+                                    <label className="block text-xs font-bold text-slate-500 mb-1">Course Name</label>
+                                    <input name="course" type="text" placeholder="e.g. Pine Valley" className="w-full p-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-green-500" required />
+                                </div>
+                                <div className="w-full md:w-32">
+                                    <label className="block text-xs font-bold text-slate-500 mb-1">Score</label>
+                                    <input name="score" type="number" placeholder="e.g. 88" className="w-full p-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-green-500" required />
+                                </div>
+                                <div className="w-full md:w-40">
+                                    <label className="block text-xs font-bold text-slate-500 mb-1">Date</label>
+                                    <input name="date" type="date" defaultValue={new Date().toISOString().split('T')[0]} className="w-full p-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-green-500" />
+                                </div>
+                                <button type="submit" className="w-full md:w-auto p-3 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700 transition flex items-center justify-center">
+                                    <Icons.Plus size={20} className="mr-2" /> Log
+                                </button>
+                            </form>
+                        </Card>
+                        
+                        <div className="space-y-4">
+                            <h3 className="text-lg font-bold text-slate-800 ml-1">Recent Rounds</h3>
+                            {golf.rounds.length > 0 ? golf.rounds.map(round => (
+                                <div key={round.id} className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between">
+                                    <div>
+                                        <div className="font-bold text-slate-800">{round.course}</div>
+                                        <div className="text-xs text-slate-500">{round.date}</div>
+                                    </div>
+                                    <div className="flex items-center gap-4">
+                                        <div className="text-xl font-bold text-slate-900 bg-slate-100 w-12 h-12 flex items-center justify-center rounded-lg">
+                                            {round.score}
+                                        </div>
+                                        <button onClick={() => deleteGolfRound(round.id)} className="text-slate-300 hover:text-red-500 transition">
+                                            <Icons.Trash2 size={18} />
+                                        </button>
+                                    </div>
+                                </div>
+                            )) : (
+                                <div className="text-center py-10 bg-white rounded-xl border border-dashed border-slate-200 text-slate-400">
+                                    No rounds logged yet. Get out there and swing!
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                );
+            };
+
+            const TasksView = () => (
+                <div className="max-w-3xl mx-auto space-y-6">
+                    <div className="flex items-center justify-between">
+                        <h2 className="text-2xl font-bold text-slate-800">Master List</h2>
+                        <span className="text-sm bg-slate-100 px-3 py-1 rounded-full text-slate-600">
+                            {tasks.filter(t => t.complete).length}/{tasks.length} Completed
+                        </span>
+                    </div>
+
+                    <div>
+                        <div className="flex items-center text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
+                            <Icons.Repeat size={12} className="mr-1" /> Quick Add Regulars
+                        </div>
+                        <div className="flex flex-wrap gap-2 mb-6">
+                            {taskPresets.map((preset, idx) => (
+                                <button key={idx} onClick={() => addTask(preset.text, preset.category)} className="px-3 py-1.5 rounded-full text-sm font-medium bg-white border border-slate-200 text-slate-600 hover:bg-indigo-50 hover:border-indigo-200 hover:text-indigo-600 transition flex items-center">
+                                    <Icons.Plus size={14} className="mr-1" /> {preset.text}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    <form onSubmit={handleManualAdd} className="relative">
+                        <input name="taskInput" type="text" placeholder="Add a new task..." className="w-full pl-4 pr-12 py-4 rounded-xl shadow-sm border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                        <button type="submit" className="absolute right-2 top-2 p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                            <Icons.Plus size={20} />
+                        </button>
+                    </form>
+
+                    <div className="grid gap-4">
+                        {['chores', 'work', 'life', 'general', 'health'].map(cat => {
+                            const catTasks = tasks.filter(t => t.category === cat);
+                            if (catTasks.length === 0) return null;
+                            return (
+                                <div key={cat} className="space-y-2">
+                                    <h3 className="text-xs font-bold uppercase text-slate-400 tracking-wider ml-1 mt-4 mb-2">{cat}</h3>
+                                    {catTasks.map(task => (
+                                        <div key={task.id} className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between group hover:border-blue-200 transition">
+                                            <div className="flex items-center flex-1" onClick={() => toggleTask(task.id)}>
+                                                <div className={`cursor-pointer w-6 h-6 rounded-full border-2 mr-4 flex items-center justify-center transition-all ${task.complete ? 'bg-blue-500 border-blue-500' : 'border-slate-300 hover:border-blue-400'}`}>
+                                                    {task.complete && <Icons.CheckCircle className="w-4 h-4 text-white" />}
+                                                </div>
+                                                <span className={`text-lg transition-all ${task.complete ? 'text-slate-300 line-through' : 'text-slate-800'}`}>{task.text}</span>
+                                            </div>
+                                            <button onClick={() => deleteTask(task.id)} className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition">
+                                                <Icons.Trash2 size={18} />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            );
+
+            const CalendarView = () => (
+                <div className="max-w-4xl mx-auto h-[600px] flex flex-col md:flex-row gap-6">
+                    <div className="flex-1 bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col">
+                        <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-purple-50">
+                            <div>
+                                <h2 className="text-xl font-bold text-slate-800">Today's Agenda</h2>
+                                <p className="text-sm text-slate-500">{currentTime.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</p>
+                            </div>
+                            <Icons.Calendar className="text-purple-400 opacity-50 w-8 h-8" />
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                            {[9, 10, 11, 12, 13, 14, 15, 16, 17, 18].map(hour => {
+                                const event = events.find(e => parseInt(e.time.split(':')[0]) === hour);
+                                return (
+                                    <div key={hour} className="flex group min-h-[80px]">
+                                        <div className="w-16 text-xs text-slate-400 font-medium pt-2 text-right pr-4 border-r border-slate-100">
+                                            {hour > 12 ? `${hour-12} PM` : `${hour} AM`}
+                                        </div>
+                                        <div className="flex-1 pl-4 py-1 relative">
+                                            <div className="absolute top-0 left-0 w-full h-[1px] bg-slate-50 group-first:hidden"></div>
+                                            {event ? (
+                                                <div className={`p-3 rounded-lg border-l-4 shadow-sm ${event.type === 'work' ? 'bg-blue-50 border-blue-500 text-blue-900' : event.type === 'health' ? 'bg-green-50 border-green-500 text-green-900' : 'bg-purple-50 border-purple-500 text-purple-900'}`}>
+                                                    <div className="font-bold">{event.title}</div>
+                                                    <div className="text-xs opacity-75">{event.time} • {event.duration}</div>
+                                                </div>
+                                            ) : (
+                                                <div className="h-full rounded-lg border-2 border-dashed border-slate-100 hover:border-slate-200 transition flex items-center justify-center opacity-0 hover:opacity-100 cursor-pointer">
+                                                    <span className="text-xs text-slate-400">+ Add Event</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
+            );
+
+            const NutritionView = () => (
+                <div className="max-w-3xl mx-auto grid gap-6">
+                    <Card className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h2 className="text-2xl font-bold">Hydration Tracker</h2>
+                                <p className="text-cyan-100">Goal: 8 cups a day</p>
+                            </div>
+                            <div className="text-4xl font-bold">{nutrition.water}<span className="text-lg opacity-60">/8</span></div>
+                        </div>
+                        <div className="mt-6 flex justify-center space-x-4">
+                            <button onClick={addWater} className="bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full w-16 h-16 flex items-center justify-center transition active:scale-95">
+                                <Icons.Plus size={32} />
+                            </button>
+                        </div>
+                        <div className="mt-8 grid grid-cols-8 gap-2">
+                            {[...Array(8)].map((_, i) => (
+                                <div key={i} className={`h-12 rounded-lg transition-all duration-500 ${i < nutrition.water ? 'bg-white' : 'bg-black/20'}`} />
+                            ))}
+                        </div>
+                    </Card>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <Card>
+                            <h3 className="font-bold text-slate-800 mb-4 flex items-center">
+                                <Icons.Utensils className="mr-2 text-orange-500" /> Meal Log
+                            </h3>
+                            <div className="space-y-3">
+                                {nutrition.meals.map(meal => (
+                                    <div key={meal.id} onClick={() => toggleMeal(meal.id)} className={`p-4 rounded-xl border-2 cursor-pointer transition flex items-center justify-between ${meal.complete ? 'border-green-500 bg-green-50' : 'border-slate-100 hover:border-orange-200'}`}>
+                                        <span className={`font-medium ${meal.complete ? 'text-green-700' : 'text-slate-700'}`}>{meal.name}</span>
+                                        {meal.complete && <Icons.CheckCircle size={20} className="text-green-600" />}
+                                    </div>
+                                ))}
+                            </div>
+                        </Card>
+
+                        <Card className={`flex flex-col justify-center items-center text-center p-8 text-white relative overflow-hidden transition-all ${integrations.appleHealth ? 'bg-slate-900' : 'bg-slate-300'}`}>
+                            {!integrations.appleHealth && (
+                                <div className="absolute inset-0 flex items-center justify-center bg-black/10 backdrop-blur-sm z-10">
+                                    <div className="text-slate-800 font-bold bg-white px-4 py-2 rounded-lg shadow-lg">Apple Health Not Connected</div>
+                                </div>
+                            )}
+                            <h3 className="text-lg font-medium text-slate-300 mb-2">Daily Caloric Burn</h3>
+                            <div className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-pink-500 mb-4">{fitness.calories}</div>
+                            <div className="text-sm text-slate-400 mb-6">Synced from Watch</div>
+                            <div className="w-full space-y-2">
+                                <div className="flex justify-between text-xs text-slate-400">
+                                    <span>Move</span>
+                                    <span>75%</span>
+                                </div>
+                                <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+                                    <div className="h-full w-3/4 bg-pink-500"></div>
+                                </div>
+                                <div className="flex justify-between text-xs text-slate-400 pt-2">
+                                    <span>Stand</span>
+                                    <span>{fitness.standHours}/12 hrs</span>
+                                </div>
+                                <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+                                    <div className="h-full w-2/3 bg-blue-500"></div>
+                                </div>
+                            </div>
+                        </Card>
+                    </div>
+                </div>
+            );
+
+            // --- Main Layout ---
+
+            const NavItem = ({ id, icon: Icon, label }) => (
+                <button
+                    onClick={() => { setActiveTab(id); setIsMobileMenuOpen(false); }}
+                    className={`flex items-center space-x-3 w-full p-3 rounded-xl transition-all duration-200 ${
+                        activeTab === id 
+                        ? 'bg-slate-900 text-white shadow-lg' 
+                        : 'text-slate-500 hover:bg-slate-100'
+                    }`}
+                >
+                    <Icon size={20} />
+                    <span className="font-medium">{label}</span>
+                </button>
+            );
+
+            return (
+                <div className="min-h-screen bg-slate-50 flex font-sans text-slate-900">
+                    <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b border-slate-200 z-50 flex items-center justify-between px-4">
+                        <div className="flex items-center space-x-2">
+                            <Icons.Brain className="text-indigo-600" />
+                            <span className="font-bold text-xl">LifeOS</span>
+                        </div>
+                        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2">
+                            {isMobileMenuOpen ? <Icons.X /> : <Icons.Menu />}
+                        </button>
+                    </div>
+
+                    <aside className={`fixed md:sticky top-0 left-0 h-full w-64 bg-white border-r border-slate-200 z-40 transform transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? 'translate-x-0 pt-20' : '-translate-x-full pt-8'} md:translate-x-0 md:block`}>
+                        <div className="px-6 mb-8 hidden md:flex items-center space-x-2">
+                            <div className="bg-indigo-600 p-2 rounded-lg">
+                                <Icons.Brain className="text-white w-6 h-6" />
+                            </div>
+                            <span className="font-bold text-2xl tracking-tight">LifeOS</span>
+                        </div>
+
+                        <nav className="px-4 space-y-2">
+                            <NavItem id="dashboard" icon={Icons.Activity} label="Dashboard" />
+                            <NavItem id="tasks" icon={Icons.CheckCircle} label="Tasks & Chores" />
+                            <NavItem id="calendar" icon={Icons.Calendar} label="Calendar" />
+                            <NavItem id="nutrition" icon={Icons.Utensils} label="Nutrition" />
+                            <NavItem id="golf" icon={Icons.Flag} label="Golf Tracker" />
+                            <div className="pt-4 mt-4 border-t border-slate-100">
+                                <NavItem id="settings" icon={Icons.Settings} label="Settings & Sync" />
+                            </div>
+                        </nav>
+
+                        <div className="absolute bottom-8 left-0 w-full px-6">
+                            <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
+                                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Daily Goal</h4>
+                                <div className="flex justify-between items-end mb-2">
+                                    <span className="text-sm font-semibold text-slate-700">Completion</span>
+                                    <span className="text-xs text-indigo-600 font-bold">{calculateDailyProgress()}%</span>
+                                </div>
+                                <ProgressBar current={calculateDailyProgress()} total={100} color="bg-indigo-500" />
+                            </div>
+                        </div>
+                    </aside>
+
+                    <main className="flex-1 p-4 md:p-8 pt-20 md:pt-8 overflow-y-auto h-screen">
+                        <div className="max-w-6xl mx-auto">
+                            {activeTab === 'dashboard' && <DashboardView />}
+                            {activeTab === 'tasks' && <TasksView />}
+                            {activeTab === 'calendar' && <CalendarView />}
+                            {activeTab === 'nutrition' && <NutritionView />}
+                            {activeTab === 'golf' && <GolfView />}
+                            {activeTab === 'settings' && <SettingsView />}
+                        </div>
+                    </main>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<LifeOS />);
+    </script>
+</body>
+</html>
