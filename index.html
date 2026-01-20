@@ -1,242 +1,691 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Spring Sprint: April 1st Lean-Out</title>
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
-        .animate-in { animation: fadeIn 0.5s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .heart-beat { animation: beat 2s infinite; }
-        @keyframes beat { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
-    </style>
-</head>
-<body class="bg-[#F8FAFC]">
-    <div id="root"></div>
+import React, { useState, useEffect } from 'react';
+import { 
+  Activity, 
+  CheckCircle, 
+  Clock, 
+  Utensils, 
+  Calendar as CalendarIcon, 
+  Plus, 
+  Flame, 
+  Brain,
+  Trash2,
+  Menu,
+  X,
+  Dumbbell,
+  Zap,
+  Repeat,
+  BookOpen,
+  Settings as SettingsIcon,
+  Link2,
+  Smartphone,
+  Watch
+} from 'lucide-react';
 
-    <script type="text/babel">
-        const { useState, useMemo, useEffect } = React;
+// --- Components ---
 
-        const LucideIcon = ({ name, size = 24, className = "" }) => {
-            useEffect(() => { if (window.lucide) window.lucide.createIcons(); }, [name]);
-            return <i data-lucide={name} className={className} style={{ width: size, height: size, display: 'inline-block' }}></i>;
-        };
+const Card = ({ children, className = "" }) => (
+  <div className={`bg-white rounded-2xl shadow-sm border border-slate-100 p-6 ${className}`}>
+    {children}
+  </div>
+);
 
-        const PLAN_DATA = {
-            phases: [
-                {
-                    name: "Phase 1: Metabolic Baseline (Weeks 1-4)",
-                    weeks: Array.from({ length: 4 }, (_, i) => ({
-                        id: 1 + i,
-                        workouts: {
-                            Monday: { title: "Push Day (PF Machine/DB)", items: ["Daily 1-Mile Run (Mandatory)", "Chest Press Machine (3x12)", "Dumbbell Lateral Raises (3x15)", "Cable Tricep Pushdowns (3x15)", "Incline DB Press (3x10)", "Push-ups (3 to failure)"] },
-                            Tuesday: { title: "Pull Day (Back/Biceps)", items: ["Daily 1-Mile Run (Mandatory)", "Lat Pulldown Machine (4x10)", "Seated Cable Row (3x12)", "DB Bicep Curls (3x12)", "Face Pulls (3x15)", "Hammer Curls (3x12)"] },
-                            Wednesday: { title: "Legs - Quad Focus", items: ["Daily 1-Mile Run (Mandatory)", "Leg Press Machine (4x15)", "Goblet Squats (3x12)", "Leg Extension Machine (3x15)", "Walking Lunges (3x20 total)", "Plank (3x45s)"] },
-                            Thursday: { title: "Active Recovery / Mobility", items: ["Daily 1-Mile Run (Mandatory)", "20 min Stretching", "Foam Roll Lats/Quads"] },
-                            Friday: { title: "Legs - Ham/Glute Focus", items: ["Daily 1-Mile Run (Mandatory)", "Smith Machine RDLs (4x12)", "Leg Curl Machine (3x15)", "Dumbbell Glute Bridges (3x20)", "Calf Raises (4x20)"] },
-                            Saturday: { title: "Full Body High Intensity", items: ["Daily 1-Mile Run (Mandatory)", "DB Thrusters (3x12)", "Renegade Rows (3x10/ea)", "Mountain Climbers (3x45s)", "Burpees (3x10)"] },
-                            Sunday: { title: "Rest & Prep", items: ["Daily 1-Mile Run (Mandatory)", "Long Walk (30 min)", "Meal Prep: Fiber focus"] }
-                        },
-                        meals: {
-                            Breakfast: "Overnight Oats (1/2 cup) + 1 tbsp Chia Seeds + Berries (Heart Healthy)",
-                            Lunch: "Large Mediterranean Salad: Chickpeas, Quinoa, Cucumber, Spinach, Grilled Chicken (5oz), Olive Oil",
-                            Dinner: "Baked Salmon (6oz) + Roasted Asparagus + 1/2 Sweet Potato (Omega-3 Focus)",
-                            Snacks: "Apple + Handful of Walnuts (Good for Cholesterol) / 0% Greek Yogurt"
-                        }
-                    }))
-                },
-                {
-                    name: "Phase 2: Lean Shred (Weeks 5-11)",
-                    weeks: Array.from({ length: 7 }, (_, i) => ({
-                        id: 5 + i,
-                        workouts: {
-                            Monday: { title: "Upper Power Circuit", items: ["Daily 1-Mile Run (Mandatory)", "DB Chest Press (4x8)", "DB Rows (4x8)", "Smith Machine Overhead Press (3x10)", "Dips (3x12)", "Plank Jacks (3x30)"] },
-                            Tuesday: { title: "Posterior Chain Intensity", items: ["Daily 1-Mile Run (Mandatory)", "Smith Machine Squats (4x10)", "DB RDLs (4x10)", "Cable Pull-throughs (3x15)", "Walking Lunges with DBs (3x24 steps)"] },
-                            Wednesday: { title: "Cardio + Core Blast", items: ["Daily 1-Mile Run (Mandatory)", "15 min Incline Walk (Level 10+)", "Hanging Leg Raises (3x15)", "Russian Twists (3x40)", "Bicycle Crunches (3x30)"] },
-                            Thursday: { title: "Upper Volume", items: ["Daily 1-Mile Run (Mandatory)", "Assisted Pull-up Machine (3x12)", "Cable Chest Flyes (3x15)", "Lat Pulldowns (3x15)", "Lateral Raises (4x20)"] },
-                            Friday: { title: "Leg Volume", items: ["Daily 1-Mile Run (Mandatory)", "Leg Press (4x20)", "Seated Leg Curls (4x15)", "Bulgarian Split Squats (3x10/ea)", "Calf Raises (4x20)"] },
-                            Saturday: { title: "Metabolic Conditioning", items: ["Daily 1-Mile Run (Mandatory)", "EMOM 20: 1) 15 Kbell Swings, 2) 12 Push-ups, 3) 15 Goblet Squats, 4) Rest"] },
-                            Sunday: { title: "Recovery", items: ["Daily 1-Mile Run (Mandatory)", "Gentle Yoga", "Cholesterol-friendly Prep"] }
-                        },
-                        meals: {
-                            Breakfast: "Scrambled Egg Whites (5) with Sautéed Spinach & Whole Grain Toast",
-                            Lunch: "Lentil Soup + Side Salad with Avocado & Walnuts",
-                            Dinner: "Grilled Turkey Burger (no bun) + Huge portion of Roasted Broccoli",
-                            Snacks: "Pear + Almonds / Low-fat Cottage Cheese with Flax Seeds"
-                        }
-                    }))
-                }
-            ]
-        };
+const ProgressBar = ({ current, total, color = "bg-blue-500" }) => {
+  const percentage = Math.min(100, Math.max(0, (current / total) * 100));
+  return (
+    <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden">
+      <div 
+        className={`h-full ${color} transition-all duration-500 ease-out`} 
+        style={{ width: `${percentage}%` }}
+      />
+    </div>
+  );
+};
 
-        const Countdown = () => {
-            const targetDate = new Date("2026-04-01T00:00:00");
-            const [timeLeft, setTimeLeft] = useState({ days: 0, hrs: 0, min: 0 });
+export default function LifeOS() {
+  // --- State ---
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
 
-            useEffect(() => {
-                const timer = setInterval(() => {
-                    const diff = targetDate - new Date();
-                    if (diff <= 0) clearInterval(timer);
-                    else setTimeLeft({
-                        days: Math.floor(diff / 86400000),
-                        hrs: Math.floor((diff / 3600000) % 24),
-                        min: Math.floor((diff / 60000) % 60)
-                    });
-                }, 1000);
-                return () => clearInterval(timer);
-            }, []);
+  // Data State
+  const [fitness, setFitness] = useState({
+    completedWorkouts: [], 
+    streak: 14,
+    calories: 450,
+    recovery: 82, 
+    standHours: 8, 
+  });
 
-            return (
-                <div className="flex justify-center gap-3 my-4">
-                    {[{l: "Days", v: timeLeft.days}, {l: "Hrs", v: timeLeft.hrs}, {l: "Min", v: timeLeft.min}].map((t, i) => (
-                        <div key={i} className="bg-white border-2 border-teal-100 rounded-2xl px-4 py-2 shadow-sm">
-                            <div className="text-2xl font-extrabold text-teal-600 leading-tight">{t.v}</div>
-                            <div className="text-[10px] font-bold text-slate-400 uppercase">{t.l}</div>
-                        </div>
-                    ))}
+  const [mindfulness, setMindfulness] = useState({
+    devotional: false,
+    gratitude: false
+  });
+
+  const [nutrition, setNutrition] = useState({
+    water: 3, 
+    meals: [
+      { id: 1, name: 'Breakfast', complete: true },
+      { id: 2, name: 'Lunch', complete: false },
+      { id: 3, name: 'Dinner', complete: false },
+      { id: 4, name: 'Supplements', complete: false },
+    ]
+  });
+
+  const [tasks, setTasks] = useState([
+    { id: 1, text: 'Do the dishes', category: 'chores', complete: false },
+    { id: 2, text: 'Take out trash', category: 'chores', complete: false },
+    { id: 3, text: 'Email project manager', category: 'work', complete: true },
+    { id: 4, text: 'Call Mom', category: 'life', complete: false },
+  ]);
+
+  const [events, setEvents] = useState([
+    { id: 1, title: 'Deep Work Block', time: '09:00', duration: '2h', type: 'work' },
+    { id: 2, title: 'Lunch with Sarah', time: '12:30', duration: '1h', type: 'life' },
+    { id: 3, title: 'Dentist Appointment', time: '15:00', duration: '1h', type: 'health' },
+  ]);
+
+  const [integrations, setIntegrations] = useState({
+    whoop: true,
+    appleHealth: true
+  });
+
+  // Pre-defined recurring tasks
+  const taskPresets = [
+    { text: 'Weekly Laundry', category: 'chores' },
+    { text: 'Grocery Run', category: 'chores' },
+    { text: 'Pay Bills', category: 'life' },
+    { text: 'Water Plants', category: 'chores' },
+    { text: 'Refill Meds', category: 'health' },
+  ];
+
+  // --- Effects ---
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 60000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Load/Save to LocalStorage
+  useEffect(() => {
+    const savedData = localStorage.getItem('lifeos-data');
+    if (savedData) {
+      const parsed = JSON.parse(savedData);
+      setFitness(parsed.fitness || fitness);
+      setTasks(parsed.tasks || tasks);
+      setNutrition(parsed.nutrition || nutrition);
+      setMindfulness(parsed.mindfulness || mindfulness);
+      setIntegrations(parsed.integrations || integrations);
+    }
+  }, []);
+
+  useEffect(() => {
+    const dataToSave = { fitness, tasks, nutrition, mindfulness, integrations };
+    localStorage.setItem('lifeos-data', JSON.stringify(dataToSave));
+  }, [fitness, tasks, nutrition, mindfulness, integrations]);
+
+  // --- Handlers ---
+
+  const toggleTask = (id) => {
+    setTasks(tasks.map(t => t.id === id ? { ...t, complete: !t.complete } : t));
+  };
+
+  const addTask = (text, category = 'general') => {
+    if (!text) return;
+    const newTask = {
+      id: Date.now(),
+      text,
+      category,
+      complete: false
+    };
+    setTasks([...tasks, newTask]);
+  };
+
+  const handleManualAdd = (e) => {
+    e.preventDefault();
+    addTask(e.target.elements.taskInput.value);
+    e.target.reset();
+  };
+
+  const toggleMeal = (id) => {
+    setNutrition({
+      ...nutrition,
+      meals: nutrition.meals.map(m => m.id === id ? { ...m, complete: !m.complete } : m)
+    });
+  };
+
+  const addWater = () => {
+    setNutrition({ ...nutrition, water: Math.min(nutrition.water + 1, 10) });
+  };
+
+  const toggleWorkout = (type) => {
+    const isCompleted = fitness.completedWorkouts.includes(type);
+    let newWorkouts;
+    let newStreak = fitness.streak;
+
+    if (isCompleted) {
+      newWorkouts = fitness.completedWorkouts.filter(w => w !== type);
+      if (fitness.completedWorkouts.length === 1) newStreak -= 1;
+    } else {
+      newWorkouts = [...fitness.completedWorkouts, type];
+      if (fitness.completedWorkouts.length === 0) newStreak += 1;
+    }
+    setFitness({ ...fitness, completedWorkouts: newWorkouts, streak: newStreak });
+  };
+
+  const toggleDevotional = () => {
+    setMindfulness(prev => ({ ...prev, devotional: !prev.devotional }));
+  };
+
+  const toggleIntegration = (key) => {
+    setIntegrations(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const deleteTask = (id) => {
+    setTasks(tasks.filter(t => t.id !== id));
+  };
+
+  // --- Render Helpers ---
+
+  const getGreeting = () => {
+    const hour = currentTime.getHours();
+    if (hour < 12) return "Good Morning";
+    if (hour < 18) return "Good Afternoon";
+    return "Good Evening";
+  };
+
+  const calculateDailyProgress = () => {
+    const totalItems = tasks.length + nutrition.meals.length + 2; // +1 workout, +1 devotional
+    const completedItems = tasks.filter(t => t.complete).length + 
+                           nutrition.meals.filter(m => m.complete).length + 
+                           (fitness.completedWorkouts.length > 0 ? 1 : 0) +
+                           (mindfulness.devotional ? 1 : 0);
+    return Math.round((completedItems / totalItems) * 100);
+  };
+
+  // --- Views ---
+
+  const DashboardView = () => (
+    <div className="space-y-6">
+      {/* Hero Section */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="md:col-span-2 bg-gradient-to-br from-indigo-600 to-purple-700 rounded-3xl p-8 text-white shadow-xl flex flex-col justify-between relative overflow-hidden">
+          <div className="relative z-10">
+            <h1 className="text-3xl font-bold mb-2">{getGreeting()}, Athlete.</h1>
+            <p className="opacity-90">Your daily sync is at {calculateDailyProgress()}% completion.</p>
+            
+            <div className="mt-8 flex items-center space-x-4">
+              {integrations.whoop && (
+                <div className="bg-white/20 backdrop-blur-md rounded-xl p-4 flex flex-col items-center min-w-[100px] border border-white/10">
+                  <span className="text-2xl font-bold">{fitness.recovery}%</span>
+                  <div className="flex items-center space-x-1 opacity-80">
+                    <Activity size={10} />
+                    <span className="text-xs uppercase tracking-wider">Recovery</span>
+                  </div>
                 </div>
-            );
-        };
+              )}
+              <div className="bg-white/20 backdrop-blur-md rounded-xl p-4 flex flex-col items-center min-w-[100px] border border-white/10">
+                <span className="text-2xl font-bold">{events[0]?.time || "Done"}</span>
+                <span className="text-xs uppercase tracking-wider opacity-80">Next Up</span>
+              </div>
+            </div>
+          </div>
+          <Activity className="absolute right-[-20px] bottom-[-20px] w-64 h-64 text-white opacity-10" />
+        </div>
 
-        const App = () => {
-            const [activeTab, setActiveTab] = useState('tracker');
-            const [currentWeekId, setCurrentWeekId] = useState(1);
-            const [tasks, setTasks] = useState(() => JSON.parse(localStorage.getItem('leanout_tasks')) || {});
-            const [stats, setStats] = useState(() => JSON.parse(localStorage.getItem('leanout_stats')) || [{d: 'Start', w: '174'}]);
+        {/* Daily Movement Hub */}
+        <Card className={`flex flex-col text-center transition-all border-2 ${fitness.completedWorkouts.length > 0 ? 'border-green-500 bg-green-50/50' : 'border-slate-100'}`} >
+          <div className="flex justify-between items-start w-full mb-4">
+            <div className="text-left">
+              <h3 className="text-lg font-bold text-slate-800">Movement</h3>
+              <p className="text-slate-500 text-xs">{fitness.completedWorkouts.length > 0 ? "Active day!" : "Get moving"}</p>
+            </div>
+            <div className="flex items-center text-xs font-bold text-slate-700 bg-white px-2 py-1 rounded-full shadow-sm">
+               <Flame size={14} className="mr-1 text-orange-500" />
+               {fitness.streak} Days
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-3 h-full">
+            <button 
+              onClick={() => toggleWorkout('run')}
+              className={`rounded-xl p-3 flex flex-col items-center justify-center transition-all ${fitness.completedWorkouts.includes('run') ? 'bg-green-500 text-white shadow-md' : 'bg-white border border-slate-200 hover:border-green-400 text-slate-600'}`}>
+              <Activity size={20} className="mb-1" />
+              <span className="text-xs font-bold">Run</span>
+            </button>
+            <button 
+              onClick={() => toggleWorkout('strength')}
+              className={`rounded-xl p-3 flex flex-col items-center justify-center transition-all ${fitness.completedWorkouts.includes('strength') ? 'bg-blue-500 text-white shadow-md' : 'bg-white border border-slate-200 hover:border-blue-400 text-slate-600'}`}>
+              <Dumbbell size={20} className="mb-1" />
+              <span className="text-xs font-bold">Lift</span>
+            </button>
+            <button 
+              onClick={() => toggleWorkout('yoga')}
+              className={`rounded-xl p-3 flex flex-col items-center justify-center transition-all ${fitness.completedWorkouts.includes('yoga') ? 'bg-purple-500 text-white shadow-md' : 'bg-white border border-slate-200 hover:border-purple-400 text-slate-600'}`}>
+              <Zap size={20} className="mb-1" />
+              <span className="text-xs font-bold">Yoga</span>
+            </button>
+            <button 
+              onClick={() => toggleWorkout('other')}
+              className={`rounded-xl p-3 flex flex-col items-center justify-center transition-all ${fitness.completedWorkouts.includes('other') ? 'bg-orange-500 text-white shadow-md' : 'bg-white border border-slate-200 hover:border-orange-400 text-slate-600'}`}>
+              <Plus size={20} className="mb-1" />
+              <span className="text-xs font-bold">Other</span>
+            </button>
+          </div>
+        </Card>
+      </div>
 
-            useEffect(() => localStorage.setItem('leanout_tasks', JSON.stringify(tasks)), [tasks]);
-            useEffect(() => localStorage.setItem('leanout_stats', JSON.stringify(stats)), [stats]);
+      {/* Second Row Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        
+        {/* Devotional Card */}
+        <Card className={`relative overflow-hidden transition-all duration-300 ${mindfulness.devotional ? 'bg-indigo-50 border-indigo-200' : ''}`}>
+           <div className="flex justify-between items-start mb-4">
+            <h3 className="font-bold text-slate-800 flex items-center">
+              <BookOpen className="w-5 h-5 mr-2 text-indigo-500" /> Spirit
+            </h3>
+          </div>
+          <div 
+            onClick={toggleDevotional}
+            className={`cursor-pointer rounded-xl p-4 flex flex-col items-center justify-center text-center transition-all border-2 ${mindfulness.devotional ? 'bg-indigo-500 border-indigo-500 text-white shadow-md' : 'bg-white border-dashed border-slate-300 hover:border-indigo-300 text-slate-400'}`}
+          >
+            <BookOpen size={24} className="mb-2" />
+            <span className="font-bold text-sm">{mindfulness.devotional ? "Devotional Read" : "Read Daily Devotional"}</span>
+          </div>
+        </Card>
 
-            const { phase, week } = useMemo(() => {
-                for (let p of PLAN_DATA.phases) {
-                    let w = p.weeks.find(x => x.id === currentWeekId);
-                    if (w) return { phase: p, week: w };
-                }
-            }, [currentWeekId]);
+        {/* Priorities */}
+        <Card>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="font-bold text-slate-800 flex items-center">
+              <CheckCircle className="w-5 h-5 mr-2 text-blue-500" /> Priorities
+            </h3>
+            <span className="text-xs font-medium bg-blue-100 text-blue-800 px-2 py-1 rounded-full">{tasks.filter(t => !t.complete).length}</span>
+          </div>
+          <div className="space-y-3">
+            {tasks.slice(0, 3).map(task => (
+              <div key={task.id} className="flex items-center group">
+                <button 
+                  onClick={() => toggleTask(task.id)}
+                  className={`w-4 h-4 rounded border mr-2 flex items-center justify-center transition-colors ${task.complete ? 'bg-blue-500 border-blue-500' : 'border-slate-300 hover:border-blue-400'}`}
+                >
+                  {task.complete && <CheckCircle className="w-3 h-3 text-white" />}
+                </button>
+                <span className={`text-xs truncate ${task.complete ? 'text-slate-400 line-through' : 'text-slate-700'}`}>
+                  {task.text}
+                </span>
+              </div>
+            ))}
+          </div>
+        </Card>
 
-            const toggleTask = (day, idx) => {
-                const key = `w${currentWeekId}-${day}-${idx}`;
-                setTasks(prev => ({ ...prev, [key]: !prev[key] }));
-            };
+        {/* Calendar Preview */}
+        <Card>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="font-bold text-slate-800 flex items-center">
+              <Clock className="w-5 h-5 mr-2 text-purple-500" /> Next
+            </h3>
+          </div>
+          <div className="space-y-4">
+             {events.slice(0, 2).map((evt, idx) => (
+               <div key={idx} className="flex flex-col border-l-2 border-purple-200 pl-3">
+                 <span className="text-xs font-bold text-slate-500">{evt.time}</span>
+                 <span className="text-sm font-semibold text-slate-800 truncate">{evt.title}</span>
+               </div>
+             ))}
+          </div>
+        </Card>
 
-            return (
-                <div className="min-h-screen bg-[#F8FAFC] pb-24 text-slate-900">
-                    <div className="max-w-4xl mx-auto px-4 pt-8">
-                        <header className="text-center mb-8">
-                            <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-teal-50 text-teal-700 rounded-full text-[10px] font-extrabold uppercase tracking-widest mb-4">
-                                <LucideIcon name="activity" size={14} className="heart-beat" />
-                                Goal: 162 lbs by April 1st
-                            </div>
-                            <h1 className="text-4xl md:text-6xl font-black tracking-tight text-slate-900">
-                                The <span className="text-teal-500">Spring</span> Shred
-                            </h1>
-                            <Countdown />
-                            <div className="flex justify-center gap-2 mt-6">
-                                <button onClick={() => setActiveTab('tracker')} className={`px-8 py-3 rounded-2xl text-sm font-bold transition-all ${activeTab === 'tracker' ? 'bg-teal-600 text-white shadow-lg' : 'bg-white text-slate-500'}`}>The Plan</button>
-                                <button onClick={() => setActiveTab('stats')} className={`px-8 py-3 rounded-2xl text-sm font-bold transition-all ${activeTab === 'stats' ? 'bg-teal-600 text-white shadow-lg' : 'bg-white text-slate-500'}`}>Progress</button>
-                            </div>
-                        </header>
+        {/* Nutrition Snapshot */}
+        <Card>
+           <div className="flex justify-between items-center mb-4">
+            <h3 className="font-bold text-slate-800 flex items-center">
+              <Utensils className="w-5 h-5 mr-2 text-green-500" /> Fuel
+            </h3>
+          </div>
+          <div className="flex flex-col space-y-4">
+            <div>
+              <div className="flex justify-between text-xs text-slate-500 mb-1">
+                <span>Water</span>
+                <span>{nutrition.water}/8</span>
+              </div>
+              <div className="flex space-x-1">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className={`h-6 flex-1 rounded-md ${i < nutrition.water ? 'bg-blue-400' : 'bg-slate-100'}`} />
+                ))}
+              </div>
+            </div>
+             <div className="flex justify-between items-center">
+              <span className="text-xs text-slate-500 uppercase">Meals</span>
+              <span className="font-bold text-slate-800">
+                {nutrition.meals.filter(m => m.complete).length} / {nutrition.meals.length}
+              </span>
+            </div>
+          </div>
+        </Card>
+      </div>
+    </div>
+  );
 
-                        {activeTab === 'tracker' ? (
-                            <div className="space-y-6 animate-in">
-                                <div className="bg-white p-4 rounded-3xl shadow-sm border border-slate-100 flex items-center justify-between sticky top-4 z-20">
-                                    <button onClick={() => setCurrentWeekId(Math.max(1, currentWeekId - 1))} className="p-2"><LucideIcon name="chevron-left" className="text-teal-600"/></button>
-                                    <div className="text-center">
-                                        <p className="text-[10px] font-bold text-teal-400 uppercase tracking-widest">{phase.name}</p>
-                                        <h2 className="text-xl font-black">Week {currentWeekId}</h2>
-                                    </div>
-                                    <button onClick={() => setCurrentWeekId(Math.min(11, currentWeekId + 1))} className="p-2"><LucideIcon name="chevron-right" className="text-teal-600"/></button>
-                                </div>
+  const SettingsView = () => (
+    <div className="max-w-2xl mx-auto space-y-6">
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-8">
+        <h2 className="text-2xl font-bold text-slate-800 mb-2">Integrations</h2>
+        <p className="text-slate-500 mb-8">Connect your devices to sync fitness and recovery data automatically.</p>
 
-                                <div className="grid lg:grid-cols-2 gap-6">
-                                    <div className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100">
-                                        <div className="flex items-center gap-3 mb-8">
-                                            <div className="p-3 bg-teal-50 rounded-2xl text-teal-600"><LucideIcon name="dumbbell" /></div>
-                                            <h3 className="text-xl font-black">Planet Fitness Strength</h3>
-                                        </div>
-                                        <div className="space-y-10">
-                                            {Object.entries(week.workouts).map(([day, w]) => (
-                                                <div key={day}>
-                                                    <div className="flex justify-between items-baseline mb-3">
-                                                        <span className="text-xs font-black text-teal-500 uppercase">{day}</span>
-                                                        <span className="text-xs font-bold text-slate-400 italic">{w.title}</span>
-                                                    </div>
-                                                    <div className="space-y-2">
-                                                        {w.items.map((item, idx) => {
-                                                            const isDone = tasks[`w${currentWeekId}-${day}-${idx}`];
-                                                            const isMile = item.includes("1-Mile Run");
-                                                            return (
-                                                                <div key={idx} onClick={() => toggleTask(day, idx)} className={`flex items-center gap-4 p-3.5 rounded-2xl cursor-pointer border transition-all ${isDone ? 'bg-teal-50 border-teal-100' : 'bg-white border-slate-100'} ${isMile ? 'ring-2 ring-teal-500/20' : ''}`}>
-                                                                    <div className={`w-5 h-5 rounded-full flex items-center justify-center ${isDone ? 'bg-teal-500 text-white' : 'bg-slate-100 text-transparent'}`}><LucideIcon name="check" size={12}/></div>
-                                                                    <span className={`text-sm font-semibold ${isDone ? 'line-through opacity-50' : ''} ${isMile ? 'text-teal-700' : ''}`}>{item}</span>
-                                                                </div>
-                                                            );
-                                                        })}
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
+        <div className="space-y-6">
+          {/* Whoop Integration */}
+          <div className="flex items-center justify-between p-4 border border-slate-100 rounded-xl hover:border-slate-200 transition">
+             <div className="flex items-center space-x-4">
+               <div className="bg-black text-white p-3 rounded-lg">
+                 <Activity size={24} />
+               </div>
+               <div>
+                 <h3 className="font-bold text-slate-900">Whoop</h3>
+                 <p className="text-sm text-slate-500">Syncs recovery, sleep, and strain.</p>
+               </div>
+             </div>
+             <button 
+               onClick={() => toggleIntegration('whoop')}
+               className={`px-4 py-2 rounded-lg font-bold text-sm transition-all ${integrations.whoop ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+             >
+               {integrations.whoop ? 'Connected' : 'Connect'}
+             </button>
+          </div>
 
-                                    <div className="space-y-6">
-                                        <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100">
-                                            <div className="flex items-center gap-3 mb-8">
-                                                <div className="p-3 bg-rose-50 rounded-2xl text-rose-500"><LucideIcon name="heart" /></div>
-                                                <h3 className="text-xl font-black">Heart Healthy Fuel</h3>
-                                            </div>
-                                            <div className="grid gap-4">
-                                                {Object.entries(week.meals).map(([meal, desc]) => (
-                                                    <div key={meal} className="p-4 bg-slate-50 rounded-2xl">
-                                                        <p className="text-[10px] font-black text-teal-500 uppercase mb-1">{meal}</p>
-                                                        <p className="text-sm font-medium leading-relaxed">{desc}</p>
-                                                    </div>
-                                                ))}
-                                                <div className="mt-4 p-4 bg-teal-600 rounded-2xl text-white">
-                                                    <p className="text-xs font-bold opacity-80 uppercase mb-1">Focus Tip</p>
-                                                    <p className="text-sm font-bold">Fiber binds to cholesterol in the digestive system and drags it out of the body. Aim for 30g+ daily!</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 animate-in">
-                                <div className="flex justify-between items-center mb-10">
-                                    <h3 className="text-2xl font-black">Weight Log</h3>
-                                    <button onClick={() => setStats([...stats, {d: `Week ${currentWeekId}`, w: ''}])} className="bg-teal-600 text-white px-6 py-2.5 rounded-2xl text-sm font-black shadow-lg">Check In</button>
-                                </div>
-                                <div className="grid gap-4">
-                                    {stats.map((s, i) => (
-                                        <div key={i} className="flex items-center gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                                            <input className="bg-transparent font-black text-slate-400 w-1/2 outline-none" value={s.d} onChange={e => {
-                                                const n = [...stats]; n[i].d = e.target.value; setStats(n);
-                                            }} />
-                                            <div className="flex items-center gap-2 ml-auto">
-                                                <input type="number" placeholder="Weight" className="bg-white px-4 py-2 rounded-xl w-24 text-right font-black outline-none focus:ring-2 focus:ring-teal-300" value={s.w} onChange={e => {
-                                                    const n = [...stats]; n[i].w = e.target.value; setStats(n);
-                                                }} />
-                                                <span className="font-bold text-slate-400">lbs</span>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            );
-        };
+          {/* Apple Health Integration */}
+          <div className="flex items-center justify-between p-4 border border-slate-100 rounded-xl hover:border-slate-200 transition">
+             <div className="flex items-center space-x-4">
+               <div className="bg-white border border-slate-200 text-black p-3 rounded-lg">
+                 <div className="relative">
+                   <Activity className="absolute text-blue-400 -top-1 -right-1" size={12} />
+                   <Activity className="text-green-500" size={24} />
+                 </div>
+               </div>
+               <div>
+                 <h3 className="font-bold text-slate-900">Apple Health</h3>
+                 <p className="text-sm text-slate-500">Syncs rings, steps, and workouts.</p>
+               </div>
+             </div>
+             <button 
+               onClick={() => toggleIntegration('appleHealth')}
+               className={`px-4 py-2 rounded-lg font-bold text-sm transition-all ${integrations.appleHealth ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+             >
+               {integrations.appleHealth ? 'Connected' : 'Connect'}
+             </button>
+          </div>
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
-    </script>
-</body>
-</html>
+           <div className="p-4 bg-yellow-50 text-yellow-800 rounded-xl text-sm flex items-start">
+             <Link2 size={16} className="mt-1 mr-2 flex-shrink-0" />
+             <p>Note: In a production environment, this would redirect you to login with Whoop and authorize Apple HealthKit permissions on your device.</p>
+           </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const TasksView = () => (
+    <div className="max-w-3xl mx-auto space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold text-slate-800">Master List</h2>
+        <span className="text-sm bg-slate-100 px-3 py-1 rounded-full text-slate-600">
+          {tasks.filter(t => t.complete).length}/{tasks.length} Completed
+        </span>
+      </div>
+
+      {/* Quick Add Presets (Forget-me-nots) */}
+      <div>
+        <div className="flex items-center text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
+          <Repeat size={12} className="mr-1" /> Quick Add Regulars
+        </div>
+        <div className="flex flex-wrap gap-2 mb-6">
+          {taskPresets.map((preset, idx) => (
+            <button
+              key={idx}
+              onClick={() => addTask(preset.text, preset.category)}
+              className="px-3 py-1.5 rounded-full text-sm font-medium bg-white border border-slate-200 text-slate-600 hover:bg-indigo-50 hover:border-indigo-200 hover:text-indigo-600 transition flex items-center"
+            >
+              <Plus size={14} className="mr-1" /> {preset.text}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <form onSubmit={handleManualAdd} className="relative">
+        <input 
+          name="taskInput"
+          type="text" 
+          placeholder="Add a new task..." 
+          className="w-full pl-4 pr-12 py-4 rounded-xl shadow-sm border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        <button type="submit" className="absolute right-2 top-2 p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+          <Plus size={20} />
+        </button>
+      </form>
+
+      <div className="grid gap-4">
+        {['chores', 'work', 'life', 'general', 'health'].map(cat => {
+           const catTasks = tasks.filter(t => t.category === cat);
+           if (catTasks.length === 0) return null;
+           
+           return (
+             <div key={cat} className="space-y-2">
+               <h3 className="text-xs font-bold uppercase text-slate-400 tracking-wider ml-1 mt-4 mb-2">{cat}</h3>
+               {catTasks.map(task => (
+                 <div key={task.id} className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between group hover:border-blue-200 transition">
+                   <div className="flex items-center flex-1" onClick={() => toggleTask(task.id)}>
+                      <div className={`cursor-pointer w-6 h-6 rounded-full border-2 mr-4 flex items-center justify-center transition-all ${task.complete ? 'bg-blue-500 border-blue-500' : 'border-slate-300 hover:border-blue-400'}`}>
+                        {task.complete && <CheckCircle className="w-4 h-4 text-white" />}
+                      </div>
+                      <span className={`text-lg transition-all ${task.complete ? 'text-slate-300 line-through' : 'text-slate-800'}`}>
+                        {task.text}
+                      </span>
+                   </div>
+                   <button onClick={() => deleteTask(task.id)} className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition">
+                     <Trash2 size={18} />
+                   </button>
+                 </div>
+               ))}
+             </div>
+           )
+        })}
+      </div>
+    </div>
+  );
+
+  const CalendarView = () => (
+    <div className="max-w-4xl mx-auto h-[600px] flex flex-col md:flex-row gap-6">
+       <div className="flex-1 bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col">
+         <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-purple-50">
+           <div>
+             <h2 className="text-xl font-bold text-slate-800">Today's Agenda</h2>
+             <p className="text-sm text-slate-500">{currentTime.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</p>
+           </div>
+           <CalendarIcon className="text-purple-400 opacity-50 w-8 h-8" />
+         </div>
+         
+         <div className="flex-1 overflow-y-auto p-4 space-y-4">
+           {/* Time Slots */}
+           {[9, 10, 11, 12, 13, 14, 15, 16, 17, 18].map(hour => {
+             const timeString = `${hour}:00`;
+             const event = events.find(e => parseInt(e.time.split(':')[0]) === hour);
+             
+             return (
+               <div key={hour} className="flex group min-h-[80px]">
+                 <div className="w-16 text-xs text-slate-400 font-medium pt-2 text-right pr-4 border-r border-slate-100">
+                   {hour > 12 ? `${hour-12} PM` : `${hour} AM`}
+                 </div>
+                 <div className="flex-1 pl-4 py-1 relative">
+                    <div className="absolute top-0 left-0 w-full h-[1px] bg-slate-50 group-first:hidden"></div>
+                    {event ? (
+                      <div className={`p-3 rounded-lg border-l-4 shadow-sm ${
+                        event.type === 'work' ? 'bg-blue-50 border-blue-500 text-blue-900' :
+                        event.type === 'health' ? 'bg-green-50 border-green-500 text-green-900' :
+                        'bg-purple-50 border-purple-500 text-purple-900'
+                      }`}>
+                        <div className="font-bold">{event.title}</div>
+                        <div className="text-xs opacity-75">{event.time} • {event.duration}</div>
+                      </div>
+                    ) : (
+                      <div className="h-full rounded-lg border-2 border-dashed border-slate-100 hover:border-slate-200 transition flex items-center justify-center opacity-0 hover:opacity-100 cursor-pointer">
+                        <span className="text-xs text-slate-400">+ Add Event</span>
+                      </div>
+                    )}
+                 </div>
+               </div>
+             )
+           })}
+         </div>
+       </div>
+    </div>
+  );
+
+  const NutritionView = () => (
+    <div className="max-w-3xl mx-auto grid gap-6">
+       <Card className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white">
+         <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-bold">Hydration Tracker</h2>
+              <p className="text-cyan-100">Goal: 8 cups a day</p>
+            </div>
+            <div className="text-4xl font-bold">{nutrition.water}<span className="text-lg opacity-60">/8</span></div>
+         </div>
+         <div className="mt-6 flex justify-center space-x-4">
+            <button 
+              onClick={addWater}
+              className="bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full w-16 h-16 flex items-center justify-center transition active:scale-95">
+              <Plus size={32} />
+            </button>
+         </div>
+         <div className="mt-8 grid grid-cols-8 gap-2">
+           {[...Array(8)].map((_, i) => (
+             <div key={i} className={`h-12 rounded-lg transition-all duration-500 ${i < nutrition.water ? 'bg-white' : 'bg-black/20'}`} />
+           ))}
+         </div>
+       </Card>
+
+       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+         <Card>
+           <h3 className="font-bold text-slate-800 mb-4 flex items-center">
+             <Utensils className="mr-2 text-orange-500" /> Meal Log
+           </h3>
+           <div className="space-y-3">
+             {nutrition.meals.map(meal => (
+               <div 
+                 key={meal.id} 
+                 onClick={() => toggleMeal(meal.id)}
+                 className={`p-4 rounded-xl border-2 cursor-pointer transition flex items-center justify-between ${meal.complete ? 'border-green-500 bg-green-50' : 'border-slate-100 hover:border-orange-200'}`}
+               >
+                 <span className={`font-medium ${meal.complete ? 'text-green-700' : 'text-slate-700'}`}>{meal.name}</span>
+                 {meal.complete && <CheckCircle size={20} className="text-green-600" />}
+               </div>
+             ))}
+           </div>
+         </Card>
+
+         <Card className={`flex flex-col justify-center items-center text-center p-8 text-white relative overflow-hidden transition-all ${integrations.appleHealth ? 'bg-slate-900' : 'bg-slate-300'}`}>
+            {!integrations.appleHealth && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/10 backdrop-blur-sm z-10">
+                <div className="text-slate-800 font-bold bg-white px-4 py-2 rounded-lg shadow-lg">Apple Health Not Connected</div>
+              </div>
+            )}
+            <h3 className="text-lg font-medium text-slate-300 mb-2">Daily Caloric Burn</h3>
+            <div className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-pink-500 mb-4">
+              {fitness.calories}
+            </div>
+            <div className="text-sm text-slate-400 mb-6">Synced from Watch</div>
+            <div className="w-full space-y-2">
+              <div className="flex justify-between text-xs text-slate-400">
+                <span>Move</span>
+                <span>75%</span>
+              </div>
+              <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+                <div className="h-full w-3/4 bg-pink-500"></div>
+              </div>
+              
+              <div className="flex justify-between text-xs text-slate-400 pt-2">
+                <span>Stand</span>
+                <span>{fitness.standHours}/12 hrs</span>
+              </div>
+              <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+                <div className="h-full w-2/3 bg-blue-500"></div>
+              </div>
+            </div>
+         </Card>
+       </div>
+    </div>
+  );
+
+  // --- Main Layout ---
+
+  const NavItem = ({ id, icon: Icon, label }) => (
+    <button
+      onClick={() => { setActiveTab(id); setIsMobileMenuOpen(false); }}
+      className={`flex items-center space-x-3 w-full p-3 rounded-xl transition-all duration-200 ${
+        activeTab === id 
+        ? 'bg-slate-900 text-white shadow-lg' 
+        : 'text-slate-500 hover:bg-slate-100'
+      }`}
+    >
+      <Icon size={20} />
+      <span className="font-medium">{label}</span>
+    </button>
+  );
+
+  return (
+    <div className="min-h-screen bg-slate-50 flex font-sans text-slate-900">
+      
+      {/* Mobile Header */}
+      <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b border-slate-200 z-50 flex items-center justify-between px-4">
+        <div className="flex items-center space-x-2">
+          <Brain className="text-indigo-600" />
+          <span className="font-bold text-xl">LifeOS</span>
+        </div>
+        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2">
+          {isMobileMenuOpen ? <X /> : <Menu />}
+        </button>
+      </div>
+
+      {/* Sidebar Navigation */}
+      <aside className={`fixed md:sticky top-0 left-0 h-full w-64 bg-white border-r border-slate-200 z-40 transform transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? 'translate-x-0 pt-20' : '-translate-x-full pt-8'} md:translate-x-0 md:block`}>
+        <div className="px-6 mb-8 hidden md:flex items-center space-x-2">
+          <div className="bg-indigo-600 p-2 rounded-lg">
+            <Brain className="text-white w-6 h-6" />
+          </div>
+          <span className="font-bold text-2xl tracking-tight">LifeOS</span>
+        </div>
+
+        <nav className="px-4 space-y-2">
+          <NavItem id="dashboard" icon={Activity} label="Dashboard" />
+          <NavItem id="tasks" icon={CheckCircle} label="Tasks & Chores" />
+          <NavItem id="calendar" icon={CalendarIcon} label="Calendar" />
+          <NavItem id="nutrition" icon={Utensils} label="Nutrition" />
+          <div className="pt-4 mt-4 border-t border-slate-100">
+            <NavItem id="settings" icon={SettingsIcon} label="Settings & Sync" />
+          </div>
+        </nav>
+
+        <div className="absolute bottom-8 left-0 w-full px-6">
+          <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
+            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Daily Goal</h4>
+            <div className="flex justify-between items-end mb-2">
+              <span className="text-sm font-semibold text-slate-700">Completion</span>
+              <span className="text-xs text-indigo-600 font-bold">{calculateDailyProgress()}%</span>
+            </div>
+            <ProgressBar current={calculateDailyProgress()} total={100} color="bg-indigo-500" />
+          </div>
+        </div>
+      </aside>
+
+      {/* Main Content Area */}
+      <main className="flex-1 p-4 md:p-8 pt-20 md:pt-8 overflow-y-auto h-screen">
+        <div className="max-w-6xl mx-auto">
+          {activeTab === 'dashboard' && <DashboardView />}
+          {activeTab === 'tasks' && <TasksView />}
+          {activeTab === 'calendar' && <CalendarView />}
+          {activeTab === 'nutrition' && <NutritionView />}
+          {activeTab === 'settings' && <SettingsView />}
+        </div>
+      </main>
+
+    </div>
+  );
+}
