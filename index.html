@@ -5,13 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>LifeOS for Jasmine</title>
-    <!-- Tailwind CSS -->
+    <title>Jasmine's LifeOS</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- React & ReactDOM -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-    <!-- Babel for JSX -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     
     <style>
@@ -20,7 +17,7 @@
         body { 
             font-family: 'Inter', sans-serif; 
             -webkit-tap-highlight-color: transparent;
-            overscroll-behavior-y: none; /* Prevent pull-to-refresh feel */
+            overscroll-behavior-y: none;
         }
         
         .transition-all { transition-property: all; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 300ms; }
@@ -48,16 +45,11 @@
             from { transform: translateY(100%); }
             to { transform: translateY(0); }
         }
-        @keyframes fadeOut {
-            from { opacity: 1; }
-            to { opacity: 0; }
-        }
 
         .animate-checkmark { stroke-dasharray: 24; stroke-dashoffset: 24; animation: checkmark 0.4s ease-out forwards; }
         .animate-pop { animation: pop 0.3s ease-out; }
         .animate-toast { animation: slideUp 0.3s ease-out forwards; }
         .animate-drawer { animation: slideUpDrawer 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-        .animate-fade-out { animation: fadeOut 0.5s ease-in forwards; }
         
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -72,29 +64,14 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, useMemo, useRef, useCallback } = React;
+        const { useState, useEffect, useCallback } = React;
 
         // --- Utilities ---
-        const vibrate = () => {
-            if (navigator.vibrate) navigator.vibrate(10);
-        };
-
-        const timeSince = (date) => {
-            if (!date) return "Not yet";
-            const seconds = Math.floor((new Date() - new Date(date)) / 1000);
-            if (seconds < 60) return "Just now";
-            let interval = seconds / 3600;
-            if (interval > 1) return Math.floor(interval) + "h ago";
-            interval = seconds / 60;
-            if (interval > 1) return Math.floor(interval) + "m ago";
-            return "Just now";
-        };
-
+        const vibrate = () => { if (navigator.vibrate) navigator.vibrate(10); };
+        
         const formatTime12Hour = (time24) => {
             if (!time24) return '';
-            // Check if already 12h format or TBD
             if (time24.includes('AM') || time24.includes('PM') || time24 === 'TBD') return time24;
-            
             const [hours, minutes] = time24.split(':');
             const h = parseInt(hours, 10);
             const suffix = h >= 12 ? 'PM' : 'AM';
@@ -107,36 +84,16 @@
             const container = document.createElement('div');
             container.className = 'confetti-container';
             document.body.appendChild(container);
-
-            for (let i = 0; i < 100; i++) {
+            for (let i = 0; i < 50; i++) {
                 const el = document.createElement('div');
                 el.className = 'confetti';
                 el.style.left = Math.random() * 100 + 'vw';
                 el.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-                el.style.animationDuration = (Math.random() * 3 + 2) + 's';
+                el.style.animationDuration = (Math.random() * 2 + 1) + 's';
                 el.style.opacity = Math.random();
                 container.appendChild(el);
             }
-
-            setTimeout(() => container.remove(), 5000);
-        };
-
-        const QUOTES = [
-            "Discipline is freedom.",
-            "How you do anything is how you do everything.",
-            "Trust the process.",
-            "Win the day.",
-            "Comfort is the enemy of progress.",
-            "Don't count the days, make the days count.",
-            "Excellence is a habit.",
-            "Be where your feet are.",
-            "Hard work beats talent when talent doesn't work hard.",
-            "Greatness is a lot of small things done well."
-        ];
-
-        const getDailyQuote = () => {
-            const dayOfYear = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24);
-            return QUOTES[dayOfYear % QUOTES.length];
+            setTimeout(() => container.remove(), 3000);
         };
 
         // --- Icons ---
@@ -148,97 +105,32 @@
             Activity: (p) => <IconBase {...p} path={<polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />} />,
             CheckCircle: (p) => <IconBase {...p} path={<><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" className="animate-checkmark" /></>} />,
             Check: (p) => <IconBase {...p} path={<polyline points="20 6 9 17 4 12" />} />,
-            Clock: (p) => <IconBase {...p} path={<><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></>} />,
-            Utensils: (p) => <IconBase {...p} path={<><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2" /><path d="M7 2v20" /><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3z" /></>} />,
+            Utensils: (p) => <IconBase {...p} path={<path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2M7 2v20M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3z" />} />,
             Calendar: (p) => <IconBase {...p} path={<><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></>} />,
             Plus: (p) => <IconBase {...p} path={<><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></>} />,
-            Flame: (p) => <IconBase {...p} path={<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />} />,
             Brain: (p) => <IconBase {...p} path={<path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z" />} />,
-            Trash2: (p) => <IconBase {...p} path={<><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /><line x1="10" y1="11" x2="10" y2="17" /><line x1="14" y1="11" x2="14" y2="17" /></>} />,
+            Trash2: (p) => <IconBase {...p} path={<><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></>} />,
             X: (p) => <IconBase {...p} path={<><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></>} />,
-            Flag: (p) => <IconBase {...p} path={<><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" /><line x1="4" y1="22" x2="4" y2="15" /></>} />,
             ShoppingBag: (p) => <IconBase {...p} path={<><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" /><line x1="3" y1="6" x2="21" y2="6" /><path d="M16 10a4 4 0 0 1-8 0" /></>} />,
             Settings: (p) => <IconBase {...p} path={<><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" /></>} />,
-            HelpCircle: (p) => <IconBase {...p} path={<><circle cx="12" cy="12" r="10" /><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" /><line x1="12" y1="17" x2="12.01" y2="17" /></>} />,
-            Dumbbell: (p) => <IconBase {...p} path={<><path d="m6.5 6.5 11 11" /><path d="m21 21-1-1" /><path d="m3 3 1 1" /><path d="m18 22 4-4" /><path d="m2 6 4-4" /><path d="m3 10 7-7" /><path d="m14 21 7-7" /></>} />,
-            Droplet: (p) => <IconBase {...p} path={<path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />} />,
             BookOpen: (p) => <IconBase {...p} path={<><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" /><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" /></>} />,
-            BarChart: (p) => <IconBase {...p} path={<><line x1="12" y1="20" x2="12" y2="10" /><line x1="18" y1="20" x2="18" y2="4" /><line x1="6" y1="20" x2="6" y2="16" /></>} />,
-            Zap: (p) => <IconBase {...p} path={<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />} />,
-            Target: (p) => <IconBase {...p} path={<><circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="6" /><circle cx="12" cy="12" r="2" /></>} />,
-            Sun: (p) => <IconBase {...p} path={<><circle cx="12" cy="12" r="5" /><line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" /><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" /><line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" /><line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" /></>} />,
-            Moon: (p) => <IconBase {...p} path={<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />} />,
-            Sparkles: (p) => <IconBase {...p} path={<><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" /><path d="M5 3v4" /><path d="M9 3v4" /><path d="M3 5h4" /><path d="M3 9h4" /></>} />,
-            Briefcase: (p) => <IconBase {...p} path={<><rect x="2" y="7" width="20" height="14" rx="2" ry="2" /><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" /></>} />,
-            StickyNote: (p) => <IconBase {...p} path={<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></>} />,
-            ChevronLeft: (p) => <IconBase {...p} path={<polyline points="15 18 9 12 15 6" />} />,
-            ChevronRight: (p) => <IconBase {...p} path={<polyline points="9 18 15 12 9 6" />} />,
-            User: (p) => <IconBase {...p} path={<><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></>} />,
+            Scale: (p) => <IconBase {...p} path={<><rect x="4" y="16" width="16" height="6" rx="2" ry="2" /><path d="M16 16v-4a4 4 0 0 0-8 0v4" /><path d="M12 16v-4" /></>} />,
             TrendingUp: (p) => <IconBase {...p} path={<><polyline points="23 6 13.5 15.5 8.5 10.5 1 18" /><polyline points="17 6 23 6 23 12" /></>} />,
+            Run: (p) => <IconBase {...p} path={<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />} /> // Simplified user
         };
 
         // --- Shared Components ---
         const Card = ({ children, className = "", onClick, style }) => (
-            <div 
-                onClick={onClick} 
-                style={style}
-                className={`bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 p-5 transition active:scale-[0.98] ${onClick ? 'cursor-pointer' : ''} ${className}`}
-            >
+            <div onClick={onClick} style={style} className={`bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 p-5 transition active:scale-[0.98] ${onClick ? 'cursor-pointer' : ''} ${className}`}>
                 {children}
             </div>
         );
 
-        const EmptyState = ({ emoji, message, buttonText, onButtonClick }) => (
-            <div className="flex flex-col items-center justify-center p-10 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-3xl text-center">
-                <span className="text-4xl mb-4">{emoji}</span>
-                <p className="text-slate-500 dark:text-slate-400 mb-6 max-w-xs font-medium">{message}</p>
-                {buttonText && (
-                    <button 
-                        onClick={onButtonClick}
-                        className="bg-indigo-600 text-white px-5 py-2.5 rounded-full font-bold shadow-lg shadow-indigo-500/20 active:scale-95 transition"
-                    >
-                        {buttonText}
-                    </button>
-                )}
-            </div>
-        );
-
-        const Tooltip = ({ text, children }) => {
-            const [isVisible, setIsVisible] = useState(false);
-            return (
-                <div className="relative inline-block" onMouseEnter={() => setIsVisible(true)} onMouseLeave={() => setIsVisible(false)} onClick={() => setIsVisible(!isVisible)}>
-                    {children}
-                    {isVisible && (
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 p-2 bg-slate-800 text-white text-[10px] rounded shadow-xl z-50 min-w-[120px] text-center">
-                            {text}
-                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-slate-800" />
-                        </div>
-                    )}
-                </div>
-            );
-        };
-
-        const ConfirmDialog = ({ isOpen, title, message, confirmText, cancelText, onConfirm, onCancel, isDestructive }) => {
-            if (!isOpen) return null;
-            return (
-                <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
-                    <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 w-full max-w-sm shadow-2xl animate-toast">
-                        <h3 className="font-bold text-lg mb-2 dark:text-white">{title}</h3>
-                        <p className="text-slate-500 dark:text-slate-400 text-sm mb-6">{message}</p>
-                        <div className="flex space-x-3">
-                            <button onClick={onCancel} className="flex-1 py-3 font-bold text-slate-500 bg-slate-100 dark:bg-slate-800 dark:text-slate-300 rounded-2xl active:scale-95 transition">{cancelText || 'Cancel'}</button>
-                            <button onClick={onConfirm} className={`flex-1 py-3 font-bold text-white rounded-2xl active:scale-95 transition ${isDestructive ? 'bg-red-500' : 'bg-indigo-600'}`}>{confirmText || 'Confirm'}</button>
-                        </div>
-                    </div>
-                </div>
-            );
-        };
-
         const Modal = ({ isOpen, onClose, title, children }) => {
             if (!isOpen) return null;
             return (
-                <div className="fixed inset-0 bg-black/50 z-50 flex items-end md:items-center justify-center p-4 backdrop-blur-sm overflow-hidden">
-                    <div className="bg-white dark:bg-slate-900 w-full md:max-w-md max-h-[85vh] flex flex-col animate-drawer md:animate-toast rounded-t-3xl md:rounded-3xl shadow-2xl">
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-end md:items-center justify-center p-4 backdrop-blur-sm overflow-hidden" onClick={onClose}>
+                    <div className="bg-white dark:bg-slate-900 w-full md:max-w-md max-h-[85vh] flex flex-col animate-drawer md:animate-toast rounded-t-3xl md:rounded-3xl shadow-2xl" onClick={e => e.stopPropagation()}>
                         <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center flex-shrink-0">
                             <h3 className="font-bold text-lg dark:text-white">{title}</h3>
                             <button onClick={onClose} className="p-1"><Icons.X className="text-slate-400" /></button>
@@ -249,945 +141,385 @@
             );
         };
 
+        const EmptyState = ({ emoji, message, buttonText, onButtonClick }) => (
+            <div className="flex flex-col items-center justify-center p-10 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-3xl text-center">
+                <span className="text-4xl mb-4">{emoji}</span>
+                <p className="text-slate-500 dark:text-slate-400 mb-6 max-w-xs font-medium">{message}</p>
+                {buttonText && (
+                    <button onClick={onButtonClick} className="bg-indigo-600 text-white px-5 py-2.5 rounded-full font-bold shadow-lg shadow-indigo-500/20 active:scale-95 transition">
+                        {buttonText}
+                    </button>
+                )}
+            </div>
+        );
+
         // --- Main Application ---
         function App() {
-            // -- State Definitions --
+            // -- State --
             const [activeTab, setActiveTab] = useState('dashboard');
             const [darkMode, setDarkMode] = useState(false);
             const [toasts, setToasts] = useState([]);
-            const [lastAction, setLastAction] = useState(null);
             const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
             const [quickAddType, setQuickAddType] = useState('task');
-            const [confirmData, setConfirmData] = useState(null);
-            const [dismissedSuggestions, setDismissedSuggestions] = useState({});
-            const [focusMode, setFocusMode] = useState(false);
-            const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
             
             // Popovers
             const [mealPopoverOpen, setMealPopoverOpen] = useState(false);
             const [readPopoverOpen, setReadPopoverOpen] = useState(false);
 
             // Data
-            const [user, setUser] = useState({ name: 'Jasmine', points: 0, seasonPoints: 0, waterGoal: 8, readGoal: 20, currentBook: 'Atomic Habits' });
-            const [fitness, setFitness] = useState({ workouts: [], streak: 0, recovery: 0, standHours: 8, calories: 0, statsLogged: false });
-            const [nutrition, setNutrition] = useState({ water: 0, lastWaterTime: null, meals: [] });
-            const [mindfulness, setMindfulness] = useState({ devotional: false, readPages: 0, streak: 0 });
-            const [tasks, setTasks] = useState([
-                { id: 1, title: 'Drink pre-workout', energy: 'low', time: 5, complete: false, date: new Date().toLocaleDateString(), category: 'personal' },
-                { id: 2, title: 'Clean golf clubs', energy: 'medium', time: 20, complete: false, date: new Date().toLocaleDateString(), category: 'personal' },
-                { id: 3, title: 'Review budget', energy: 'high', time: 45, complete: false, date: new Date().toLocaleDateString(), category: 'work' }
-            ]);
-            const [groceries, setGroceries] = useState([{ id: 1, name: 'Eggs', category: 'Dairy', checked: false }]);
-            const [golf, setGolf] = useState({ rounds: [], handicap: 18.2 });
-            const [events, setEvents] = useState([
-                { id: 1, title: 'Morning Run', time: '07:30', date: new Date().toLocaleDateString(), category: 'fitness' },
-                { id: 2, title: 'Girls Varsity Basketball vs Oakcrest', time: '16:30', date: '1/22/2026', category: 'girls-sports' },
-                { id: 3, title: 'Girls Varsity Basketball vs St. James', time: '17:00', date: '1/23/2026', category: 'girls-sports' },
-                { id: 4, title: 'Girls Varsity Basketball vs Randolph Macon', time: '15:30', date: '1/26/2026', category: 'girls-sports' },
-                { id: 5, title: 'Girls Varsity Basketball vs Foxcroft', time: '16:00', date: '1/28/2026', category: 'girls-sports' },
-                { id: 6, title: 'Girls Varsity Basketball vs Covenant', time: 'TBD', date: '1/31/2026', category: 'girls-sports' },
-            ]);
-            const [history, setHistory] = useState([]);
-            
-            // v8 New State
-            const [mealPlan, setMealPlan] = useState({
-                Monday: { b: '', l: '', d: '' }, Tuesday: { b: '', l: '', d: '' }, Wednesday: { b: '', l: '', d: '' },
-                Thursday: { b: '', l: '', d: '' }, Friday: { b: '', l: '', d: '' }, Saturday: { b: '', l: '', d: '' }, Sunday: { b: '', l: '', d: '' }
+            const [user, setUser] = useState({ name: 'Jasmine', points: 0, waterGoal: 8, readGoal: 20, currentBook: 'Atomic Habits', weight: 170, goalWeight: 162 });
+            // Modified Fitness State for Athlete Persona
+            const [fitness, setFitness] = useState({ 
+                mileRun: false, 
+                strength: false, 
+                recovery: 0, 
+                workouts: [] 
             });
-            const [recipes, setRecipes] = useState(''); // Simple chef notes
-
-            // -- Utilities --
-            const showToast = useCallback((message, type = 'success', points = 0, onUndo = null) => {
-                const id = Date.now();
-                setToasts(prev => [...prev, { id, message, type, points, onUndo }]);
-                setTimeout(() => {
-                    setToasts(prev => prev.filter(t => t.id !== id));
-                }, 4000);
-                vibrate();
-            }, []);
-
-            const addPoints = useCallback((pts) => {
-                if (pts === 0) return;
-                setUser(prev => ({ ...prev, points: prev.points + pts, seasonPoints: prev.seasonPoints + pts }));
-            }, []);
-
-            // -- Logic Helpers --
-            const calculateScoreBreakdown = () => {
-                const totalTasks = tasks.length || 1;
-                const completedTasks = tasks.filter(t => t.complete).length;
-                
-                const taskScore = Math.round((completedTasks / totalTasks) * 35); 
-                const movementScore = fitness.workouts.length > 0 ? 20 : 0; 
-                
-                const waterScore = Math.min(1, nutrition.water / user.waterGoal) * 10;
-                const mealScore = Math.min(1, nutrition.meals.length / 3) * 15;
-                const nutritionScore = Math.round(waterScore + mealScore);
-
-                const mindScore = (mindfulness.devotional ? 10 : 0) + (mindfulness.readPages > 0 ? 10 : 0);
-                
-                const total = Math.min(100, Math.round(taskScore + movementScore + nutritionScore + mindScore));
-                return { total, hydration: waterScore * 2, movement: movementScore, mind: mindScore, tasks: taskScore, nutrition: nutritionScore };
-            };
-
-            // -- Persistance --
+            const [nutrition, setNutrition] = useState({ water: 0, meals: [] });
+            const [mindfulness, setMindfulness] = useState({ devotional: false, readPages: 0 });
+            const [tasks, setTasks] = useState([
+                { id: 1, title: 'Clean golf clubs', energy: 'low', time: 20, complete: false, category: 'personal' }
+            ]);
+            const [groceries, setGroceries] = useState([{ id: 1, name: 'Oatmeal (Low Cholesterol)', category: 'Pantry', checked: false }]);
+            const [events, setEvents] = useState([
+                { id: 1, title: 'Morning Run', time: '07:30', date: new Date().toLocaleDateString(), category: 'fitness' }
+            ]);
+            
+            // -- Persistence & Init --
             useEffect(() => {
-                const saved = localStorage.getItem('lifeos-v8-data');
-                const today = new Date().toLocaleDateString();
+                const saved = localStorage.getItem('lifeos-jasmine-v1');
                 if (saved) {
                     const d = JSON.parse(saved);
+                    // Reset daily habits if new day
+                    if (d.lastActiveDate !== new Date().toLocaleDateString()) {
+                        setFitness(prev => ({ ...prev, mileRun: false, strength: false, workouts: [] }));
+                        setNutrition(prev => ({ ...prev, water: 0, meals: [] }));
+                        setMindfulness(prev => ({ ...prev, devotional: false, readPages: 0 }));
+                        setTasks(prev => prev.filter(t => !t.complete)); // Clear completed tasks
+                    } else {
+                        setFitness(d.fitness || fitness);
+                        setNutrition(d.nutrition || nutrition);
+                        setMindfulness(d.mindfulness || mindfulness);
+                    }
                     setUser(d.user || user);
                     setTasks(d.tasks || tasks);
                     setGroceries(d.groceries || groceries);
-                    setGolf(d.golf || golf);
-                    setHistory(d.history || []);
                     setEvents(d.events || events);
                     setDarkMode(d.darkMode || false);
-                    setMealPlan(d.mealPlan || mealPlan);
-                    setRecipes(d.recipes || '');
-
-                    if (d.lastActiveDate !== today) {
-                        const dailyHabits = { water: d.nutrition?.water || 0, workout: d.fitness?.workouts?.length > 0, spirit: d.mindfulness?.devotional };
-                        setHistory(prev => [{ date: d.lastActiveDate, score: d.dailyScore || 0, habits: dailyHabits }, ...prev].slice(0, 60));
-                        setNutrition({ water: 0, lastWaterTime: null, meals: [] });
-                        setMindfulness(prev => ({ ...prev, devotional: false, readPages: 0 }));
-                        setFitness(prev => ({ ...prev, workouts: [], calories: 0, statsLogged: false }));
-                    } else {
-                        setNutrition(d.nutrition || nutrition);
-                        setMindfulness(d.mindfulness || mindfulness);
-                        setFitness(d.fitness || fitness);
-                    }
                 }
             }, []);
 
             useEffect(() => {
-                const breakdown = calculateScoreBreakdown();
-                const data = { user, fitness, nutrition, mindfulness, tasks, groceries, golf, events, history, darkMode, mealPlan, recipes, lastActiveDate: new Date().toLocaleDateString(), dailyScore: breakdown.total };
-                localStorage.setItem('lifeos-v8-data', JSON.stringify(data));
-            }, [user, fitness, nutrition, mindfulness, tasks, groceries, golf, events, history, darkMode, mealPlan, recipes]);
-
-            useEffect(() => {
+                const data = { user, fitness, nutrition, mindfulness, tasks, groceries, events, darkMode, lastActiveDate: new Date().toLocaleDateString() };
+                localStorage.setItem('lifeos-jasmine-v1', JSON.stringify(data));
                 if (darkMode) document.documentElement.classList.add('dark');
                 else document.documentElement.classList.remove('dark');
-            }, [darkMode]);
+            }, [user, fitness, nutrition, mindfulness, tasks, groceries, events, darkMode]);
 
-            // -- Logic Actions --
-            const handleUndo = () => {
-                if (!lastAction) return;
-                const { type, prevData, points } = lastAction;
-                if (type === 'TASK') setTasks(prevData);
-                if (type === 'WATER') setNutrition(prevData);
-                if (type === 'GROCERY') setGroceries(prevData);
-                if (type === 'DEVOTIONAL') setMindfulness(prevData);
-                if (type === 'EVENT') setEvents(prevData);
-                addPoints(-points);
-                setLastAction(null);
-                showToast("Action undone", "info");
+            // -- Logic --
+            const showToast = useCallback((message, type = 'success', points = 0) => {
+                const id = Date.now();
+                setToasts(prev => [...prev, { id, message, points }]);
+                setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 4000);
+                vibrate();
+                if (points > 0) setUser(prev => ({...prev, points: prev.points + points}));
+            }, []);
+
+            const calculateScore = () => {
+                // Modified Scoring for Athlete Goals
+                let score = 0;
+                if (fitness.mileRun) score += 25; // High priority
+                if (fitness.strength) score += 25; // High priority
+                if (mindfulness.devotional) score += 10;
+                if (mindfulness.readPages >= user.readGoal) score += 10;
+                if (nutrition.water >= user.waterGoal) score += 10;
+                if (nutrition.meals.length >= 3) score += 10;
+                // Cap at 100
+                return Math.min(100, score + (tasks.filter(t=>t.complete).length * 5));
+            };
+
+            const toggleMileRun = () => {
+                if (fitness.mileRun) return;
+                setFitness(prev => ({...prev, mileRun: true}));
+                triggerConfetti();
+                showToast("Mile Crushed! 🏃‍♀️", "success", 25);
+            };
+
+            const toggleStrength = () => {
+                if (fitness.strength) return;
+                setFitness(prev => ({...prev, strength: true}));
+                triggerConfetti();
+                showToast("Strength Gains! 💪", "success", 25);
+            };
+
+            const logMeal = (type, healthyChoice = false) => {
+                setNutrition(prev => ({...prev, meals: [...prev.meals, { time: new Date(), type }]}));
+                showToast(healthyChoice ? "Smart Choice! 🥗" : "Meal Logged 🍽️", "success", 5);
+                setMealPopoverOpen(false);
             };
 
             const completeTask = (id) => {
-                const task = tasks.find(t => t.id === id);
-                if (!task) return;
-                if (task.energy === 'note') {
-                    setTasks(prev => prev.filter(t => t.id !== id));
-                    showToast("Note cleared!", "info");
-                    return;
-                }
-                const pts = task.energy === 'high' ? 20 : 10;
-                setLastAction({ type: 'TASK', prevData: [...tasks], points: pts });
                 setTasks(prev => prev.map(t => t.id === id ? { ...t, complete: true } : t));
-                addPoints(pts);
-                triggerConfetti();
-                showToast("Task complete! ✓", "success", 0, handleUndo);
+                showToast("Task Done! ✓", "success", 10);
             };
 
-            const logWater = (amt = 1) => {
-                setLastAction({ type: 'WATER', prevData: { ...nutrition }, points: 5 });
-                setNutrition(prev => ({ ...prev, water: prev.water + amt, lastWaterTime: new Date() }));
-                addPoints(5);
-                showToast("Hydrated 💧", "success", 0, handleUndo);
-            };
-
-            const logDevotional = () => {
-                if (mindfulness.devotional) return;
-                setLastAction({ type: 'DEVOTIONAL', prevData: { ...mindfulness }, points: 15 });
-                setMindfulness(prev => ({ ...prev, devotional: true, streak: prev.streak + 1 }));
-                addPoints(15);
-                triggerConfetti();
-                showToast("Spirit fed! 🙏", "success", 0, handleUndo);
-            };
-
-            const logMeal = (type) => {
-                setNutrition(prev => ({...prev, meals: [...prev.meals, { time: new Date(), type }], lastMealTime: new Date() }));
-                addPoints(5);
-                setMealPopoverOpen(false);
-                showToast("Meal logged! 🍽️", "success", 0);
-            };
-
-            const logReading = (pages) => {
-                setMindfulness(prev => ({...prev, readPages: prev.readPages + pages}));
-                addPoints(5);
-                setReadPopoverOpen(false);
-                showToast(`+${pages} Pages! 📖`, "success", 0);
-            };
-
-            const toggleGrocery = (id) => {
-                setLastAction({ type: 'GROCERY', prevData: [...groceries], points: 0 });
-                setGroceries(prev => prev.map(g => g.id === id ? { ...g, checked: !g.checked } : g));
-                const item = groceries.find(g => g.id === id);
-                showToast(item && !item.checked ? "Checked off!" : "Unmarked", "info");
-            };
-
-            const clearCheckedGroceries = () => {
-                const checkedCount = groceries.filter(g => g.checked).length;
-                if (checkedCount === 0) return;
-                setLastAction({ type: 'GROCERY', prevData: [...groceries], points: 0 }); 
-                setGroceries(prev => prev.filter(g => !g.checked));
-                showToast(`Cleared ${checkedCount} items`, "info", 0, handleUndo);
-                setConfirmData(null);
-            };
-
-            const addGrocery = (name, category = 'Other') => {
-                 setGroceries(prev => [...prev, { id: Date.now(), name, category, checked: false }]);
-                 showToast("Added to list! 🛒", "success");
-            };
-
-            const deleteEvent = (id) => {
-                setLastAction({ type: 'EVENT', prevData: [...events], points: 0 });
-                setEvents(prev => prev.filter(e => e.id !== id));
-                showToast("Event removed", "info", 0, handleUndo);
-            }
-            
-            const updateMealPlan = (day, type, value) => {
-                setMealPlan(prev => ({
-                    ...prev,
-                    [day]: { ...prev[day], [type]: value }
-                }));
-            };
-
-            const getSmartQuickAddType = () => {
-                const hour = new Date().getHours();
-                if (activeTab === 'golf') return 'round';
-                if (activeTab === 'groceries') return 'grocery';
-                if (activeTab === 'tasks') return 'task';
-                if (hour >= 6 && hour < 10 && !fitness.statsLogged) return 'stats';
-                if ((hour >= 11 && hour < 13) || (hour >= 17 && hour < 20)) return 'meal';
-                return 'task';
-            };
-
-            const getNextAction = () => {
-                const hour = new Date().getHours();
-                const now = Date.now();
-                const isDismissed = (id) => dismissedSuggestions[id] && (now - dismissedSuggestions[id] < 3600000);
-
-                const notes = tasks.filter(t => t.energy === 'note');
-                if (notes.length > 2 && !isDismissed('notes')) {
-                    return { id: 'notes', emoji: "🧠", text: "Process your hallway notes", action: () => setActiveTab('tasks') };
-                }
-
-                if (hour >= 6 && hour < 10 && !fitness.statsLogged && !isDismissed('stats')) {
-                    return { id: 'stats', emoji: "🌅", text: "Log your morning recovery", action: () => openQuickAdd('stats') };
-                }
-                const hoursSinceWater = nutrition.lastWaterTime ? (Date.now() - new Date(nutrition.lastWaterTime)) / 3600000 : 999;
-                if (nutrition.water < user.waterGoal * 0.5 && hoursSinceWater > 2 && !isDismissed('water')) {
-                    return { id: 'water', emoji: "💧", text: "Time to hydrate", action: () => logWater(1) };
-                }
-                if (((hour >= 11 && hour < 13) || (hour >= 17 && hour < 20)) && !isDismissed('meal')) {
-                    const hoursSinceMeal = nutrition.lastMealTime ? (Date.now() - new Date(nutrition.lastMealTime)) / 3600000 : 999;
-                    if (hoursSinceMeal > 4) return { id: 'meal', emoji: "🍽️", text: "Don't forget to eat", action: () => setMealPopoverOpen(true) };
-                }
-                if (fitness.workouts.length === 0 && !isDismissed('move')) {
-                     const moveText = fitness.recovery >= 70 ? "Great recovery—time to move" : "Ready to move today?";
-                     return { id: 'move', emoji: "💪", text: moveText, action: () => openQuickAdd('workout') };
-                }
-                if (hour >= 18 && hour < 22 && !mindfulness.devotional && !isDismissed('spirit')) {
-                    return { id: 'spirit', emoji: "🙏", text: "Wind down with devotional", action: logDevotional };
-                }
-                if (mindfulness.readPages < user.readGoal && !isDismissed('read')) {
-                    const remaining = user.readGoal - mindfulness.readPages;
-                    return { id: 'read', emoji: "📖", text: `${remaining} pages left in ${user.currentBook}`, action: () => setReadPopoverOpen(true) };
-                }
-                const topTask = tasks.find(t => !t.complete);
-                if (topTask && !isDismissed('task')) {
-                    return { id: 'task', emoji: "⚡", text: topTask.title, action: () => completeTask(topTask.id) };
-                }
-                return { id: 'win', emoji: "🏆", text: "You're crushing it today!", action: null };
-            };
-
-            const openQuickAdd = (type) => {
-                setQuickAddType(type);
-                setIsQuickAddOpen(true);
-            };
-
-            // --- Components ---
-            const ScoreRing = ({ score, breakdown }) => {
-                const radius = 60; 
-                const stroke = 8;
-                const normalizedRadius = radius - stroke * 2;
+            // -- Components --
+            const ScoreRing = () => {
+                const score = calculateScore();
+                const radius = 60; const stroke = 8; const normalizedRadius = radius - stroke * 2;
                 const circumference = normalizedRadius * 2 * Math.PI;
                 const strokeDashoffset = circumference - (score / 100) * circumference;
                 
-                let color = "text-indigo-500";
-                if (score >= 80) color = "text-green-500";
-                else if (score >= 50) color = "text-blue-500";
-                else color = "text-orange-500";
-
                 return (
                     <div className="flex flex-col items-center justify-center py-6">
                         <div className="relative w-48 h-48 flex items-center justify-center">
-                            <svg height={radius * 2.5} width={radius * 2.5} className="rotate-[-90deg] drop-shadow-xl">
-                                <circle className="text-slate-100 dark:text-slate-800" stroke="currentColor" strokeWidth={stroke} r={normalizedRadius} cx={radius * 1.25} cy={radius * 1.25} fill="transparent" />
-                                <circle className={`${color} transition-all duration-1000 ease-out`} stroke="currentColor" fill="transparent" strokeWidth={stroke} strokeDasharray={circumference + ' ' + circumference} style={{ strokeDashoffset, strokeLinecap: 'round' }} r={normalizedRadius} cx={radius * 1.25} cy={radius * 1.25} />
+                            <svg height={radius * 2.5} width={radius * 2.5} className="rotate-[-90deg]">
+                                <circle className="text-slate-200 dark:text-slate-800" stroke="currentColor" strokeWidth={stroke} r={normalizedRadius} cx={radius * 1.25} cy={radius * 1.25} fill="transparent" />
+                                <circle className="text-indigo-500 transition-all duration-1000 ease-out" stroke="currentColor" fill="transparent" strokeWidth={stroke} strokeDasharray={circumference + ' ' + circumference} style={{ strokeDashoffset, strokeLinecap: 'round' }} r={normalizedRadius} cx={radius * 1.25} cy={radius * 1.25} />
                             </svg>
                             <div className="absolute flex flex-col items-center animate-pop">
-                                <span className={`text-6xl font-black ${color} tracking-tighter`}>{score}</span>
-                                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">{score >= 80 ? 'Excellent' : score >= 50 ? 'On Track' : 'Get Started'}</span>
+                                <span className="text-6xl font-black text-indigo-600 tracking-tighter">{score}</span>
+                                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Daily Win</span>
                             </div>
                         </div>
-                        <div className="flex space-x-2 mt-2">
-                            <div className={`h-1.5 rounded-full transition-all ${breakdown.nutrition >= 15 ? 'w-4 bg-blue-500' : 'w-1.5 bg-slate-200 dark:bg-slate-700'}`} title="Nutrition" />
-                            <div className={`h-1.5 rounded-full transition-all ${breakdown.movement >= 20 ? 'w-4 bg-green-500' : 'w-1.5 bg-slate-200 dark:bg-slate-700'}`} title="Movement" />
-                            <div className={`h-1.5 rounded-full transition-all ${breakdown.mind >= 20 ? 'w-4 bg-purple-500' : 'w-1.5 bg-slate-200 dark:bg-slate-700'}`} title="Mindfulness" />
-                            <div className={`h-1.5 rounded-full transition-all ${breakdown.tasks >= 20 ? 'w-4 bg-orange-500' : 'w-1.5 bg-slate-200 dark:bg-slate-700'}`} title="Tasks" />
-                        </div>
                     </div>
                 );
             };
 
-            const WhatNextCard = () => {
-                const action = getNextAction();
-                if (action.id === 'win') return null;
-
-                return (
-                    <div 
-                        onClick={action.action}
-                        className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-3xl p-6 text-white shadow-xl shadow-indigo-500/20 active:scale-95 transition-transform cursor-pointer relative overflow-hidden"
-                    >
-                        <div className="relative z-10 flex items-center gap-4">
-                            <div className="text-4xl">{action.emoji}</div>
-                            <div className="flex-1">
-                                <h3 className="font-bold text-lg leading-tight">{action.text}</h3>
-                                <p className="text-[10px] uppercase tracking-widest opacity-80 mt-1">Suggested for you</p>
-                            </div>
-                            <button 
-                                onClick={(e) => { e.stopPropagation(); setDismissedSuggestions({...dismissedSuggestions, [action.id]: Date.now()}); }} 
-                                className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition"
-                            >
-                                <Icons.X size={14} />
-                            </button>
-                        </div>
-                        <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white/10 rounded-full blur-xl" />
-                    </div>
-                );
-            };
-
-            const QuickActionRow = () => {
-                const actions = [
-                    { id: 'water', emoji: '💧', done: nutrition.water >= user.waterGoal, progress: `${nutrition.water}/${user.waterGoal}`, action: () => logWater(1) },
-                    { id: 'meal', emoji: '🍽️', done: nutrition.meals.length > 0, action: () => setMealPopoverOpen(true) },
-                    { id: 'move', emoji: '💪', done: fitness.workouts.length > 0, action: () => openQuickAdd('workout') },
-                    { id: 'read', emoji: '📖', done: mindfulness.readPages >= user.readGoal, action: () => setReadPopoverOpen(true) },
-                    { id: 'spirit', emoji: '🙏', done: mindfulness.devotional, action: logDevotional },
-                    { id: 'golf', emoji: '⛳', done: false, action: () => setActiveTab('golf') },
-                ];
-
-                return (
-                    <div className="flex space-x-4 overflow-x-auto no-scrollbar py-2 px-2" style={{ WebkitOverflowScrolling: 'touch' }}>
-                        {actions.map(a => (
-                            <button 
-                                key={a.id} 
-                                onClick={a.action}
-                                className={`flex-shrink-0 w-16 h-16 rounded-full flex flex-col items-center justify-center text-2xl transition active:scale-90 relative shadow-sm ${a.done ? 'bg-green-100 dark:bg-green-900/30' : 'bg-white dark:bg-slate-800'}`}
-                            >
-                                <span>{a.emoji}</span>
-                                {a.progress && <span className="text-[9px] font-bold text-slate-400 absolute -bottom-5">{a.progress}</span>}
-                                {a.done && <div className="absolute inset-0 flex items-center justify-center bg-green-500/10 rounded-full"><Icons.Check className="text-green-600 w-6 h-6 animate-pop" /></div>}
-                            </button>
-                        ))}
-                    </div>
-                );
-            };
-
-            const CalendarView = () => {
-                const [viewMode, setViewMode] = useState('month');
-                const [showGirlsOnly, setShowGirlsOnly] = useState(false);
-                const [currentDate, setCurrentDate] = useState(new Date());
-                const [selectedDate, setSelectedDate] = useState(new Date());
-
-                const filteredEvents = events.filter(e => !showGirlsOnly || e.category === 'girls-sports');
-
-                const getDaysInMonth = (date) => {
-                    const year = date.getFullYear();
-                    const month = date.getMonth();
-                    const days = new Date(year, month + 1, 0).getDate();
-                    const firstDay = new Date(year, month, 1).getDay();
-                    return { days, firstDay };
-                };
-
-                const getWeekDates = (date) => {
-                    const current = new Date(date);
-                    const day = current.getDay();
-                    const diff = current.getDate() - day; 
-                    const weekStart = new Date(current.setDate(diff));
-                    const weekDates = [];
-                    for(let i = 0; i < 7; i++) {
-                        const d = new Date(weekStart);
-                        d.setDate(weekStart.getDate() + i);
-                        weekDates.push(d);
-                    }
-                    return weekDates;
-                };
-
-                const { days, firstDay } = getDaysInMonth(currentDate);
-                const daysArray = Array.from({ length: days }, (_, i) => i + 1);
-                const blanks = Array.from({ length: firstDay }, (_, i) => i);
-                const currentWeekDates = getWeekDates(currentDate);
-
-                const getEventsForDay = (dateObj) => {
-                    const dateStr = dateObj.toLocaleDateString();
-                    return filteredEvents.filter(e => new Date(e.date).toLocaleDateString() === dateStr);
-                };
-                
-                const selectedDateEvents = getEventsForDay(selectedDate);
-
-                const next = () => {
-                    if (viewMode === 'month') setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
-                    else setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate() + 7));
-                };
-                
-                const prev = () => {
-                    if (viewMode === 'month') setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
-                    else setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate() - 7));
-                };
-
-                return (
-                    <div className="space-y-6 pb-24">
-                        <div className="flex justify-between items-center">
-                            <h2 className="text-2xl font-bold dark:text-white">Calendar</h2>
-                            <div className="flex space-x-2">
-                                <button onClick={() => setViewMode(viewMode === 'month' ? 'week' : 'month')} className="text-xs font-bold uppercase bg-slate-100 dark:bg-slate-800 px-3 py-2 rounded-lg">{viewMode === 'month' ? 'Week' : 'Month'}</button>
-                                <button onClick={() => setShowGirlsOnly(!showGirlsOnly)} className={`text-xs font-bold uppercase px-3 py-2 rounded-lg transition ${showGirlsOnly ? 'bg-pink-100 text-pink-600' : 'bg-slate-100 text-slate-500'}`}>Girls Sports</button>
-                            </div>
-                        </div>
-
-                        <div className="flex justify-between items-center mb-4">
-                            <button onClick={prev} className="p-3 bg-white dark:bg-slate-800 rounded-full shadow-sm active:scale-95 transition"><Icons.ChevronLeft size={20}/></button>
-                            <span className="font-bold text-lg dark:text-white">
-                                {viewMode === 'month' 
-                                    ? currentDate.toLocaleDateString('default', { month: 'long', year: 'numeric' })
-                                    : `Week of ${currentWeekDates[0].toLocaleDateString('default', { month: 'short', day: 'numeric' })}`
-                                }
-                            </span>
-                            <button onClick={next} className="p-3 bg-white dark:bg-slate-800 rounded-full shadow-sm active:scale-95 transition"><Icons.ChevronRight size={20}/></button>
-                        </div>
-
-                        {/* Calendar Grid */}
-                        <div className="bg-white dark:bg-slate-900 rounded-3xl p-4 shadow-sm border border-slate-100 dark:border-slate-800">
-                            {viewMode === 'month' ? (
-                                <div className="grid grid-cols-7 gap-y-2">
-                                    {['S','M','T','W','T','F','S'].map((d, i) => <div key={i} className="text-center text-xs font-bold text-slate-300 mb-2">{d}</div>)}
-                                    {blanks.map((b, i) => <div key={`blank-${i}`} />)}
-                                    {daysArray.map(day => {
-                                        const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
-                                        const dateStr = date.toLocaleDateString();
-                                        const isSelected = selectedDate.toLocaleDateString() === dateStr;
-                                        const isToday = new Date().toLocaleDateString() === dateStr;
-                                        const hasEvents = filteredEvents.some(e => new Date(e.date).toLocaleDateString() === dateStr);
-                                        const hasGirlsEvents = filteredEvents.some(e => new Date(e.date).toLocaleDateString() === dateStr && e.category === 'girls-sports');
-
-                                        return (
-                                            <div key={day} onClick={() => setSelectedDate(date)} className="flex flex-col items-center cursor-pointer">
-                                                <div className={`w-8 h-8 flex items-center justify-center rounded-full text-sm font-medium transition-all ${isSelected ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30' : isToday ? 'text-indigo-600 font-bold bg-indigo-50' : 'dark:text-slate-300'}`}>
-                                                    {day}
-                                                </div>
-                                                <div className="flex gap-0.5 mt-1 h-1">
-                                                    {hasEvents && <div className={`w-1 h-1 rounded-full ${hasGirlsEvents ? 'bg-pink-500' : 'bg-indigo-400'}`} />}
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            ) : (
-                                <div className="flex justify-between">
-                                    {currentWeekDates.map((date, i) => {
-                                        const isSelected = selectedDate.toLocaleDateString() === date.toLocaleDateString();
-                                        const isToday = new Date().toLocaleDateString() === date.toLocaleDateString();
-                                        const hasEvents = filteredEvents.some(e => new Date(e.date).toLocaleDateString() === date.toLocaleDateString());
-                                        
-                                        return (
-                                            <div key={i} onClick={() => setSelectedDate(date)} className={`flex flex-col items-center p-2 rounded-2xl cursor-pointer transition-all ${isSelected ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30' : ''}`}>
-                                                <span className={`text-[10px] font-bold uppercase mb-1 ${isSelected ? 'text-indigo-200' : 'text-slate-400'}`}>{date.toLocaleDateString('default', { weekday: 'short' }).charAt(0)}</span>
-                                                <span className={`text-lg font-bold ${isSelected ? 'text-white' : isToday ? 'text-indigo-600' : 'dark:text-slate-300'}`}>{date.getDate()}</span>
-                                                <div className={`w-1 h-1 rounded-full mt-1 ${hasEvents ? (isSelected ? 'bg-white' : 'bg-indigo-500') : 'opacity-0'}`} />
-                                            </div>
-                                        )
-                                    })}
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Selected Date Agenda */}
-                        <div>
-                            <h3 className="font-bold text-slate-400 text-xs uppercase tracking-widest mb-4 flex items-center">
-                                {selectedDate.toLocaleDateString('default', { weekday: 'long', month: 'long', day: 'numeric' })}
-                            </h3>
-                            {selectedDateEvents.length > 0 ? (
-                                <div className="space-y-3">
-                                    {selectedDateEvents.map(e => (
-                                        <div key={e.id} className="flex items-start gap-4 p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800">
-                                            <div className="flex flex-col items-center pt-1 min-w-[3rem]">
-                                                <span className="text-xs font-bold text-slate-400">{formatTime12Hour(e.time).split(' ')[0]}</span>
-                                                <span className="text-[10px] font-bold text-slate-300 uppercase">{formatTime12Hour(e.time).split(' ')[1]}</span>
-                                            </div>
-                                            <div className={`w-1 h-8 rounded-full ${e.category === 'girls-sports' ? 'bg-pink-500' : 'bg-indigo-500'}`} />
-                                            <div className="flex-1">
-                                                <div className="font-bold text-sm dark:text-white leading-tight">{e.title}</div>
-                                                {e.category === 'girls-sports' && <span className="inline-block mt-1 text-[10px] font-bold text-pink-600 bg-pink-50 px-2 py-0.5 rounded-md">Girls Sports</span>}
-                                            </div>
-                                            <button onClick={() => deleteEvent(e.id)} className="text-slate-300 hover:text-red-500"><Icons.Trash2 size={16} /></button>
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : (
-                                <div className="text-center py-12 border-2 border-dashed border-slate-100 dark:border-slate-800 rounded-3xl">
-                                    <div className="text-4xl mb-2">😴</div>
-                                    <div className="text-slate-400 text-sm">No events scheduled</div>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                );
-            };
-
-            const TodaySummary = () => {
-                const topTask = tasks.find(t => !t.complete);
-                const nextEvent = events[0];
-                const habitRisk = mindfulness.readPages < user.readGoal ? `${user.readGoal - mindfulness.readPages} pages to read` : null;
-
-                const items = [];
-                if (topTask) items.push({ icon: <Icons.CheckCircle size={16} className="text-indigo-500" />, text: topTask.title, sub: `${topTask.time}m` });
-                if (nextEvent) items.push({ icon: <Icons.Calendar size={16} className="text-orange-500" />, text: nextEvent.title, sub: formatTime12Hour(nextEvent.time) });
-                if (habitRisk) items.push({ icon: <Icons.BookOpen size={16} className="text-purple-500" />, text: habitRisk, sub: 'Habit' });
-
-                if (items.length === 0) return <EmptyState emoji="🎉" message="You're all caught up!" />;
-
-                return (
-                    <Card onClick={() => setScheduleModalOpen(true)} className="cursor-pointer hover:border-indigo-200 transition">
-                        <h3 className="text-xs font-bold text-slate-400 uppercase mb-4 tracking-widest flex justify-between">Today <span>See All &rarr;</span></h3>
-                        <div className="space-y-4">
-                            {items.slice(0, 3).map((item, i) => (
-                                <div key={i} className="flex items-center gap-3">
-                                    <div className="p-2 bg-slate-50 dark:bg-slate-800 rounded-full">{item.icon}</div>
-                                    <div className="flex-1">
-                                        <div className="font-medium text-sm dark:text-white">{item.text}</div>
-                                        <div className="text-[10px] text-slate-400">{item.sub}</div>
-                                    </div>
-                                </div>
-                            ))}
+            const SmartSuggestion = () => {
+                // ADHD logic: Only show the ONE most important next thing
+                if (!fitness.mileRun) return (
+                    <Card onClick={toggleMileRun} className="bg-gradient-to-r from-orange-500 to-red-500 text-white border-none mb-6">
+                        <div className="flex items-center gap-4">
+                            <div className="text-4xl">🏃‍♀️</div>
+                            <div><div className="font-bold text-lg">Run Your Mile</div><div className="text-white/80 text-xs uppercase font-bold tracking-wide">Priority #1 • Get it done</div></div>
                         </div>
                     </Card>
                 );
-            };
-
-            const MindSpiritCard = () => (
-                <Card className="bg-purple-50 dark:bg-purple-900/10 border-purple-100 dark:border-purple-800">
-                    <h3 className="text-xs font-bold text-purple-400 uppercase mb-4 tracking-widest flex items-center"><Icons.Brain size={14} className="mr-1"/> Mind & Spirit</h3>
-                    <div className="space-y-4">
-                        <div className="flex items-center justify-between" onClick={logDevotional}>
-                            <div className="flex items-center space-x-3">
-                                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${mindfulness.devotional ? 'bg-purple-500 border-purple-500' : 'border-purple-200'}`}>
-                                    {mindfulness.devotional && <Icons.Check size={14} className="text-white" />}
-                                </div>
-                                <span className={mindfulness.devotional ? 'text-slate-400 line-through' : 'font-medium dark:text-white'}>Daily Devotional</span>
-                            </div>
+                if (!fitness.strength) return (
+                    <Card onClick={toggleStrength} className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white border-none mb-6">
+                         <div className="flex items-center gap-4">
+                            <div className="text-4xl">💪</div>
+                            <div><div className="font-bold text-lg">Strength Training</div><div className="text-white/80 text-xs uppercase font-bold tracking-wide">Lean out goal</div></div>
                         </div>
-                        <div>
-                             <div className="flex justify-between text-xs mb-1">
-                                <span className="font-bold text-purple-800 dark:text-purple-200">{user.currentBook}</span>
-                                <span className="text-purple-500">{mindfulness.readPages}/{user.readGoal} pgs</span>
-                            </div>
-                            <div className="w-full bg-purple-200 dark:bg-purple-900 h-1.5 rounded-full overflow-hidden">
-                                <div className="h-full bg-purple-500 transition-all duration-500" style={{ width: `${Math.min((mindfulness.readPages / user.readGoal) * 100, 100)}%` }} />
-                            </div>
-                            <div className="flex justify-end mt-2">
-                                <button onClick={() => setReadPopoverOpen(true)} className="text-[10px] bg-purple-100 text-purple-600 px-2 py-1 rounded-lg font-bold uppercase hover:bg-purple-200 transition">Log Reading</button>
-                            </div>
-                        </div>
-                    </div>
-                </Card>
-            );
-
-            const ProgressView = () => {
-                const data = [...history].reverse().slice(0, 7);
-                return (
-                    <div className="space-y-8 pb-24">
-                        <div className="bg-slate-900 rounded-3xl p-8 text-center text-white relative overflow-hidden">
-                            <div className="relative z-10">
-                                <h2 className="text-4xl font-black uppercase tracking-tighter mb-2">BE GREAT</h2>
-                                <p className="text-xs text-slate-400 font-medium uppercase tracking-widest">{getDailyQuote()}</p>
-                            </div>
-                            <div className="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-white/5 rounded-full blur-2xl" />
-                            <div className="absolute bottom-0 left-0 -mb-10 -ml-10 w-40 h-40 bg-indigo-500/20 rounded-full blur-2xl" />
-                        </div>
-
-                        <Card>
-                            <h3 className="font-bold mb-4 dark:text-white flex items-center"><Icons.Activity className="mr-2 text-indigo-500" size={18}/> Consistency Score</h3>
-                            <div className="flex items-end space-x-2 h-32">
-                                {data.length > 0 ? data.map((d, i) => (
-                                    <div key={i} className="flex-1 flex flex-col items-center group">
-                                        <div 
-                                            className="w-full bg-indigo-100 dark:bg-slate-800 rounded-t-md transition-all group-hover:bg-indigo-500 relative" 
-                                            style={{ height: `${Math.max(10, d.score)}%` }}
-                                        ></div>
-                                        <div className="text-[10px] text-slate-400 mt-2">{d.date.split('/')[1]}</div>
-                                    </div>
-                                )) : <div className="w-full h-full flex items-center justify-center text-slate-400 text-sm">No history yet</div>}
-                            </div>
-                        </Card>
-
-                        <Card>
-                             <h3 className="font-bold mb-4 dark:text-white flex items-center"><Icons.Flag className="mr-2 text-green-500" size={18}/> Golf Trend</h3>
-                             <div className="h-32 flex items-end space-x-4">
-                                {golf.rounds.length > 0 ? golf.rounds.slice(0, 5).reverse().map((r, i) => (
-                                    <div key={i} className="flex-1 flex flex-col items-center">
-                                        <div className="relative w-full h-full flex items-end justify-center">
-                                            <div className="w-full bg-green-100 dark:bg-green-900/20 rounded-t-md" style={{ height: `${(100 - r.score) * 2}%` }} />
-                                            <div className="absolute bottom-2 text-xs font-bold text-green-700 dark:text-green-400">{r.score}</div>
-                                        </div>
-                                    </div>
-                                )) : <div className="w-full h-full flex items-center justify-center text-slate-400 text-sm">Log rounds to see trend</div>}
-                             </div>
-                        </Card>
-                    </div>
-                )
-            };
-
-            const ShopView = () => {
-                const [view, setView] = useState('list'); // list, plan
-                const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-
-                return (
-                    <div className="space-y-6 pb-24">
-                        <div className="flex justify-between items-center">
-                            <h2 className="text-2xl font-bold dark:text-white">Kitchen</h2>
-                            <div className="flex space-x-2 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
-                                <button onClick={() => setView('list')} className={`px-4 py-1.5 rounded-lg text-xs font-bold uppercase transition ${view === 'list' ? 'bg-white dark:bg-slate-700 shadow text-indigo-600' : 'text-slate-400'}`}>List</button>
-                                <button onClick={() => setView('plan')} className={`px-4 py-1.5 rounded-lg text-xs font-bold uppercase transition ${view === 'plan' ? 'bg-white dark:bg-slate-700 shadow text-indigo-600' : 'text-slate-400'}`}>Menu</button>
-                            </div>
-                        </div>
-
-                        {view === 'list' ? (
-                             <div className="space-y-6">
-                                {groceries.length > 0 ? (
-                                    <div className="space-y-3">
-                                        {groceries.map(g => (
-                                            <Card key={g.id} className="flex items-center justify-between" onClick={() => toggleGrocery(g.id)}>
-                                                <div className="flex items-center space-x-3">
-                                                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${g.checked ? 'bg-green-500 border-green-500' : 'border-slate-200'}`}>{g.checked && <Icons.Check size={14} className="text-white" />}</div>
-                                                    <span className={g.checked ? 'line-through text-slate-400' : 'dark:text-white font-medium'}>{g.name}</span>
-                                                </div>
-                                            </Card>
-                                        ))}
-                                        <button onClick={() => setConfirmData({ title: "Clear?", message: "Remove checked?", action: clearCheckedGroceries })} className="w-full py-4 text-slate-400 text-xs font-bold uppercase">Clear Checked</button>
-                                    </div>
-                                ) : <EmptyState emoji="🛒" message="List empty." buttonText="+ Add Item" onButtonClick={() => openQuickAdd('grocery')} />}
-                            </div>
-                        ) : (
-                            <div className="space-y-4">
-                                {days.map(day => (
-                                    <div key={day} className="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-100 dark:border-slate-800">
-                                        <div className="flex justify-between items-center mb-3">
-                                            <h3 className="font-bold text-indigo-600">{day}</h3>
-                                        </div>
-                                        <div className="space-y-3">
-                                            {['b', 'l', 'd'].map(type => (
-                                                <div key={type} className="flex items-center gap-2">
-                                                    <span className="text-[10px] font-bold text-slate-400 w-4 uppercase">{type}</span>
-                                                    <div className="flex-1 flex items-center bg-slate-50 dark:bg-slate-800 rounded-lg px-3 py-2">
-                                                        <input 
-                                                            placeholder="Plan meal..." 
-                                                            className="bg-transparent w-full text-sm outline-none dark:text-white"
-                                                            value={mealPlan[day]?.[type] || ''}
-                                                            onChange={(e) => updateMealPlan(day, type, e.target.value)}
-                                                        />
-                                                        {mealPlan[day]?.[type] && (
-                                                            <button onClick={() => addGrocery(mealPlan[day][type], 'Pantry')} className="ml-2 text-slate-300 hover:text-green-500"><Icons.Plus size={14}/></button>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                ))}
-                                <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-100 dark:border-slate-800">
-                                    <h3 className="font-bold text-slate-500 mb-2 text-sm">Chef's Notes</h3>
-                                    <textarea 
-                                        className="w-full bg-slate-50 dark:bg-slate-800 rounded-xl p-3 text-sm outline-none dark:text-white h-24 resize-none" 
-                                        placeholder="Recipe ideas, prep reminders..."
-                                        value={recipes}
-                                        onChange={(e) => setRecipes(e.target.value)}
-                                    ></textarea>
-                                </div>
-                            </div>
-                        )}
-                    </div>
+                    </Card>
                 );
-            };
-
-            const Dashboard = () => {
-                const breakdown = calculateScoreBreakdown();
-                return (
-                    <div className="space-y-8 pb-24">
-                        <WhatNextCard />
-                        <ScoreRing score={breakdown.total} breakdown={breakdown} />
-                        <QuickActionRow />
-                        <TodaySummary />
-                        <MindSpiritCard />
-                        
-                        {/* Inline Popovers */}
-                        {mealPopoverOpen && (
-                            <div className="fixed inset-0 bg-black/20 z-50 flex items-end justify-center sm:items-center p-4" onClick={() => setMealPopoverOpen(false)}>
-                                <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-3xl p-6 shadow-2xl animate-toast space-y-4" onClick={e => e.stopPropagation()}>
-                                    <h3 className="font-bold text-center dark:text-white">Log Meal</h3>
-                                    <div className="grid grid-cols-2 gap-3">
-                                        {['Breakfast', 'Lunch', 'Dinner', 'Snack'].map(m => (
-                                            <button key={m} onClick={() => logMeal(m)} className="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl font-bold text-slate-600 dark:text-slate-300 hover:bg-indigo-50 dark:hover:bg-slate-700 transition">{m}</button>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                        {readPopoverOpen && (
-                            <div className="fixed inset-0 bg-black/20 z-50 flex items-end justify-center sm:items-center p-4" onClick={() => setReadPopoverOpen(false)}>
-                                <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-3xl p-6 shadow-2xl animate-toast space-y-4" onClick={e => e.stopPropagation()}>
-                                    <h3 className="font-bold text-center dark:text-white">Log Reading</h3>
-                                    <div className="flex justify-between gap-3">
-                                        {[5, 10, 20].map(p => (
-                                            <button key={p} onClick={() => logReading(p)} className="flex-1 p-4 bg-slate-50 dark:bg-slate-800 rounded-xl font-bold text-slate-600 dark:text-slate-300 hover:bg-indigo-50 transition">+{p}</button>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                );
-            };
-
-            const FocusMode = () => {
-                const action = getNextAction();
-                return (
-                    <div className="fixed inset-0 bg-slate-900 z-[100] flex flex-col items-center justify-center p-8 text-center text-white animate-toast">
-                        <div className="text-6xl mb-8">{action.emoji}</div>
-                        <h2 className="text-3xl font-bold mb-4">{action.text}</h2>
-                        {action.action && (
-                            <button onClick={() => { action.action(); }} className="bg-indigo-600 px-8 py-4 rounded-full font-bold text-xl shadow-xl shadow-indigo-500/30 active:scale-95 transition mb-12">
-                                Complete & Next
-                            </button>
-                        )}
-                        <button onClick={() => setFocusMode(false)} className="text-slate-500 font-bold uppercase tracking-widest text-sm hover:text-white transition">Exit Focus</button>
-                    </div>
-                );
-            };
-
-            const TasksView = () => {
-                const [filter, setFilter] = useState('all'); // all, work, personal, note
-                const filtered = tasks.filter(t => !t.complete && (filter === 'all' || (filter === 'note' ? t.energy === 'note' : t.category === filter)));
-                
-                return (
-                    <div className="space-y-6 pb-24">
-                        <div className="flex justify-between items-center">
-                            <h2 className="text-2xl font-bold dark:text-white">Tasks</h2>
-                            <button onClick={() => openQuickAdd('task')} className="bg-slate-100 dark:bg-slate-800 p-2 rounded-full"><Icons.Plus /></button>
+                if (!mindfulness.devotional) return (
+                    <Card onClick={() => { setMindfulness(p => ({...p, devotional: true})); showToast("Spirit Fed 🙏", "success", 10); triggerConfetti(); }} className="bg-gradient-to-r from-purple-500 to-pink-500 text-white border-none mb-6">
+                         <div className="flex items-center gap-4">
+                            <div className="text-4xl">📖</div>
+                            <div><div className="font-bold text-lg">Daily Devotional</div><div className="text-white/80 text-xs uppercase font-bold tracking-wide">Quiet time</div></div>
                         </div>
-                        <div className="flex space-x-2 overflow-x-auto no-scrollbar pb-1" style={{ WebkitOverflowScrolling: 'touch' }}>
-                            {['all', 'work', 'personal', 'note'].map(l => (
-                                <button key={l} onClick={() => setFilter(l)} className={`px-4 py-2 rounded-full text-xs font-bold capitalize whitespace-nowrap transition ${filter === l ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900' : 'bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 text-slate-500'}`}>{l === 'note' ? 'Inbox' : l}</button>
-                            ))}
-                        </div>
-                        {filtered.length > 0 ? (
-                            <div className="space-y-3">
-                                {filtered.map(t => (
-                                    <Card key={t.id} className="flex items-center justify-between" onClick={() => completeTask(t.id)}>
-                                        <div className="flex items-center space-x-4">
-                                            {t.energy === 'note' ? (
-                                                <div className="w-6 h-6 rounded flex items-center justify-center bg-yellow-100 text-yellow-600"><Icons.StickyNote size={14} /></div>
-                                            ) : (
-                                                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${t.category === 'work' ? 'border-indigo-400' : 'border-slate-200'}`} />
-                                            )}
-                                            <div>
-                                                <div className="font-bold text-slate-800 dark:text-slate-200">{t.title}</div>
-                                                <div className="text-[10px] text-slate-400 font-bold uppercase">
-                                                    {t.energy === 'note' ? 'Note • Brain Dump' : `${t.time}m • ${t.energy} energy`}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </Card>
-                                ))}
-                            </div>
-                        ) : <EmptyState emoji="🎉" message="All caught up!" buttonText="+ Add Task" onButtonClick={() => openQuickAdd('task')} />}
-                    </div>
+                    </Card>
                 );
+                return null;
             };
 
-            const GolfView = () => {
-                const best = golf.rounds.length ? Math.min(...golf.rounds.map(r => r.score)) : '--';
-                return (
-                    <div className="space-y-6 pb-24">
-                        <div className="flex justify-between items-end">
-                            <h2 className="text-2xl font-bold dark:text-white">Golf Lab</h2>
-                            <div className="text-indigo-600 font-bold">HI: {golf.handicap}</div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <Card className="bg-slate-900 text-white"><span className="text-[10px] uppercase opacity-60">Best</span><div className="text-3xl font-bold">{best}</div></Card>
-                            <Card><span className="text-[10px] uppercase text-slate-400">Rounds</span><div className="text-3xl font-bold dark:text-white">{golf.rounds.length}</div></Card>
-                        </div>
-                        {golf.rounds.length > 0 ? (
-                            <div className="space-y-3">{golf.rounds.map((r, i) => (<Card key={i} className="flex justify-between items-center"><div><div className="font-bold dark:text-white">{r.course}</div><div className="text-[10px] text-slate-400">{r.date}</div></div><div className="text-xl font-bold text-indigo-600">{r.score}</div></Card>))}</div>
-                        ) : <EmptyState emoji="⛳" message="No rounds yet." buttonText="+ Log Round" onButtonClick={() => openQuickAdd('round')} />}
-                    </div>
-                );
-            };
-
-            const SettingsView = () => (
-                <div className="space-y-6 pb-24">
-                    <h2 className="text-2xl font-bold dark:text-white">Settings</h2>
-                    <Card><label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Name</label><input value={user.name} onChange={e => setUser({...user, name: e.target.value})} className="w-full bg-transparent font-bold text-lg dark:text-white outline-none" /></Card>
-                    <Card><label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Current Book</label><input value={user.currentBook} onChange={e => setUser({...user, currentBook: e.target.value})} className="w-full bg-transparent font-bold text-lg dark:text-white outline-none" /></Card>
-                    <Card><label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Water Goal</label><input type="number" inputMode="numeric" value={user.waterGoal} onChange={e => setUser({...user, waterGoal: parseInt(e.target.value) || 8})} className="w-full bg-transparent font-bold text-lg dark:text-white outline-none" /></Card>
-                    <Card className="flex items-center justify-between" onClick={() => setDarkMode(!darkMode)}><span className="font-bold dark:text-white">Dark Mode</span><div className={`w-12 h-6 rounded-full p-1 transition-colors ${darkMode ? 'bg-indigo-600' : 'bg-slate-200'}`}><div className={`w-4 h-4 bg-white rounded-full transition-transform ${darkMode ? 'translate-x-6' : 'translate-x-0'}`} /></div></Card>
-                    <button onClick={() => setConfirmData({ title: 'Reset App?', message: 'Erase everything?', action: () => { localStorage.clear(); window.location.reload(); } })} className="w-full py-4 text-red-500 font-bold bg-red-50 dark:bg-red-950/20 rounded-2xl">Reset App</button>
+            const DailyGrid = () => (
+                <div className="grid grid-cols-2 gap-3 mb-6">
+                    <button onClick={toggleMileRun} className={`p-4 rounded-2xl border-2 flex flex-col items-center justify-center transition-all ${fitness.mileRun ? 'bg-orange-50 border-orange-500 text-orange-600' : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800'}`}>
+                        <span className="text-2xl mb-1">🏃‍♀️</span>
+                        <span className="font-bold text-xs uppercase">1 Mile Run</span>
+                        {fitness.mileRun && <Icons.Check size={16} className="mt-1" />}
+                    </button>
+                    <button onClick={toggleStrength} className={`p-4 rounded-2xl border-2 flex flex-col items-center justify-center transition-all ${fitness.strength ? 'bg-blue-50 border-blue-500 text-blue-600' : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800'}`}>
+                        <span className="text-2xl mb-1">🏋️‍♀️</span>
+                        <span className="font-bold text-xs uppercase">Lift</span>
+                        {fitness.strength && <Icons.Check size={16} className="mt-1" />}
+                    </button>
+                     <button onClick={() => setMealPopoverOpen(true)} className={`p-4 rounded-2xl border-2 flex flex-col items-center justify-center transition-all ${nutrition.meals.length >= 3 ? 'bg-green-50 border-green-500 text-green-600' : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800'}`}>
+                        <span className="text-2xl mb-1">🥗</span>
+                        <span className="font-bold text-xs uppercase">Log Food</span>
+                        <span className="text-[10px] text-slate-400 mt-1">Watch Cholesterol</span>
+                    </button>
+                    <button onClick={() => setReadPopoverOpen(true)} className={`p-4 rounded-2xl border-2 flex flex-col items-center justify-center transition-all ${mindfulness.readPages >= user.readGoal ? 'bg-purple-50 border-purple-500 text-purple-600' : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800'}`}>
+                        <span className="text-2xl mb-1">📚</span>
+                        <span className="font-bold text-xs uppercase">Reading</span>
+                        <span className="text-[10px] text-slate-400 mt-1">{mindfulness.readPages}/{user.readGoal} pgs</span>
+                    </button>
                 </div>
             );
 
+            // -- Views --
+            const Dashboard = () => (
+                <div className="space-y-6 pb-24">
+                    <SmartSuggestion />
+                    <ScoreRing />
+                    <h3 className="font-bold text-slate-400 text-xs uppercase tracking-widest px-1">Daily Habits</h3>
+                    <DailyGrid />
+                    
+                    <h3 className="font-bold text-slate-400 text-xs uppercase tracking-widest px-1">Tasks</h3>
+                    <div className="space-y-3">
+                        {tasks.filter(t => !t.complete).slice(0, 3).map(t => (
+                            <Card key={t.id} onClick={() => completeTask(t.id)} className="flex items-center justify-between group hover:border-indigo-300">
+                                <div className="flex items-center gap-3">
+                                    <div className={`w-5 h-5 rounded-full border-2 ${t.energy === 'high' ? 'border-red-400' : 'border-slate-300'}`} />
+                                    <div>
+                                        <div className="font-bold dark:text-white">{t.title}</div>
+                                        <div className="text-[10px] text-slate-400 font-bold uppercase">{t.energy} Energy • {t.time} mins</div>
+                                    </div>
+                                </div>
+                            </Card>
+                        ))}
+                         <button onClick={() => { setQuickAddType('task'); setIsQuickAddOpen(true); }} className="w-full py-3 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl text-slate-400 text-sm font-bold hover:text-indigo-500 hover:border-indigo-300 transition">+ Add Task</button>
+                    </div>
+                </div>
+            );
+
+            const ProgressView = () => (
+                <div className="space-y-6 pb-24">
+                    <h2 className="text-2xl font-bold dark:text-white">Physique & Goals</h2>
+                    
+                    {/* Weight Card */}
+                    <Card className="bg-slate-900 text-white relative overflow-hidden">
+                        <div className="relative z-10 flex justify-between items-end">
+                            <div>
+                                <div className="text-slate-400 text-xs font-bold uppercase mb-1">Current Weight</div>
+                                <div className="text-4xl font-black">{user.weight} <span className="text-lg font-medium text-slate-400">lbs</span></div>
+                            </div>
+                            <div className="text-right">
+                                <div className="text-indigo-400 text-xs font-bold uppercase mb-1">Goal</div>
+                                <div className="text-2xl font-bold">{user.goalWeight} <span className="text-sm font-medium text-slate-400">lbs</span></div>
+                            </div>
+                        </div>
+                        <div className="mt-4 h-2 bg-white/10 rounded-full overflow-hidden">
+                            {/* Simple calculation for bar width assuming start ~175, goal 162 */}
+                            <div className="h-full bg-indigo-500" style={{ width: `${Math.max(0, Math.min(100, (175 - user.weight) / (175 - user.goalWeight) * 100))}%` }}></div>
+                        </div>
+                        <div className="mt-2 text-xs text-slate-400 text-center">{user.weight - user.goalWeight} lbs to go! Lean out mode.</div>
+                    </Card>
+
+                    <h3 className="font-bold text-slate-400 text-xs uppercase tracking-widest px-1 mt-8">Recent History</h3>
+                     <div className="space-y-2">
+                         {[1,2,3].map(i => (
+                             <div key={i} className="flex justify-between items-center p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 opacity-60">
+                                 <span className="text-sm font-bold dark:text-white">Day {i} ago</span>
+                                 <span className="text-xs font-bold text-green-500">Hit Goals</span>
+                             </div>
+                         ))}
+                     </div>
+                </div>
+            );
+
+            // -- Modals & Forms --
             const handleQuickAdd = (e) => {
                 e.preventDefault();
                 const form = e.target;
-                if (quickAddType === 'task') { 
-                    setTasks([...tasks, { id: Date.now(), title: form.title.value, energy: form.energy.value, time: form.time.value, complete: false, category: form.category.value }]); 
-                    showToast("Task added! 📝"); 
+                if (quickAddType === 'task') {
+                    setTasks([...tasks, { id: Date.now(), title: form.title.value, energy: 'medium', time: 15, complete: false, category: 'personal' }]);
+                    showToast("Task Added");
+                } else if (quickAddType === 'weight') {
+                    setUser(prev => ({...prev, weight: parseFloat(form.weight.value)}));
+                    showToast("Weight Updated", "info");
+                } else if (quickAddType === 'grocery') {
+                    setGroceries([...groceries, {id: Date.now(), name: form.item.value, category: 'Other', checked: false}]);
+                    showToast("Added to List");
                 }
-                else if (quickAddType === 'note') {
-                    setTasks([...tasks, { id: Date.now(), title: form.title.value, energy: 'note', time: 0, complete: false, category: 'work' }]);
-                    showToast("Note saved to Inbox! 🧠");
-                }
-                else if (quickAddType === 'round') { setGolf(prev => ({ ...prev, rounds: [{ course: form.course.value, score: parseInt(form.score.value), putts: form.putts.value, gir: form.gir.value, fairways: form.fairways.value, date: new Date().toLocaleDateString() }, ...prev.rounds] })); addPoints(25); triggerConfetti(); showToast("Round recorded! ⛳", "success", 0); }
-                else if (quickAddType === 'stats') { setFitness({...fitness, recovery: parseInt(form.recovery.value), calories: parseInt(form.calories.value), statsLogged: true}); showToast("Metrics updated! ⌚", "success", 0); }
-                else if (quickAddType === 'meal') { setNutrition(prev => ({...prev, meals: [...prev.meals, { time: new Date(), items: form.items.value, type: form.mealType.value }], lastMealTime: new Date() })); addPoints(5); showToast("Meal logged! 🍽️", "success", 0); }
-                else if (quickAddType === 'grocery') { setGroceries([...groceries, { id: Date.now(), name: form.item.value, category: form.category.value, checked: false }]); showToast("Added! 🛒", "success"); }
-                else if (quickAddType === 'workout') { setFitness(prev => ({ ...prev, workouts: [...prev.workouts, { type: form.workoutType.value, time: new Date() }], streak: prev.streak + 1 })); addPoints(20); triggerConfetti(); showToast("Strong work! 💪", "success", 0); }
-                else if (quickAddType === 'event') { setEvents(prev => [...prev, { id: Date.now(), title: form.title.value, time: form.time.value, date: new Date().toLocaleDateString(), category: 'personal' }]); showToast("Event scheduled! 📅", "success"); }
                 setIsQuickAddOpen(false);
             };
 
             return (
                 <div className={`min-h-screen ${darkMode ? 'dark bg-slate-950' : 'bg-slate-50'}`}>
-                    {focusMode ? <FocusMode /> : (
-                        <>
-                            {/* Toasts */}
-                            <div className="fixed bottom-24 left-0 right-0 z-[100] px-4 pointer-events-none flex flex-col-reverse items-center space-y-2 space-y-reverse">
-                                {toasts.map(t => (
-                                    <div key={t.id} className="pointer-events-auto bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-5 py-3 rounded-2xl shadow-2xl flex items-center space-x-4 animate-toast min-w-[280px]">
-                                        <div className="flex-1"><div className="text-sm font-bold">{t.message}</div>{t.points > 0 && <div className="text-[10px] font-bold text-green-400">+{t.points} pts</div>}</div>
-                                        {t.onUndo && <button onClick={t.onUndo} className="text-xs font-bold text-indigo-400 uppercase">Undo</button>}
-                                    </div>
-                                ))}
+                    
+                    {/* Header */}
+                    <div className="fixed top-0 left-0 right-0 h-16 bg-white/90 dark:bg-slate-900/90 backdrop-blur z-40 flex items-center justify-between px-6 border-b border-slate-100 dark:border-slate-800">
+                        <div className="font-black text-xl tracking-tight text-slate-900 dark:text-white">Jasmine<span className="text-indigo-600">OS</span></div>
+                        <button onClick={() => setDarkMode(!darkMode)} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full"><Icons.Settings size={18} /></button>
+                    </div>
+
+                    {/* Main Content */}
+                    <div className="pt-20 px-6 max-w-md mx-auto">
+                        {activeTab === 'dashboard' && <Dashboard />}
+                        {activeTab === 'progress' && <ProgressView />}
+                        {activeTab === 'kitchen' && (
+                            <div className="pb-24">
+                                <h2 className="text-2xl font-bold mb-4 dark:text-white">Kitchen & Needs</h2>
+                                <Card className="bg-green-50 dark:bg-green-900/20 border-green-100 dark:border-green-900 mb-6">
+                                    <div className="font-bold text-green-800 dark:text-green-300 text-sm mb-1">Dietary Focus</div>
+                                    <div className="text-xs text-green-700 dark:text-green-400">Remember: Low cholesterol. Focus on oats, beans, nuts, and fatty fish. Avoid processed snacks.</div>
+                                </Card>
+                                <div className="space-y-3">
+                                    {groceries.map(g => (
+                                        <Card key={g.id} onClick={() => setGroceries(gs => gs.map(x => x.id === g.id ? {...x, checked: !x.checked} : x))} className="flex justify-between items-center py-4">
+                                            <span className={g.checked ? 'line-through text-slate-400' : 'font-medium dark:text-white'}>{g.name}</span>
+                                            <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${g.checked ? 'bg-green-500 border-green-500' : 'border-slate-200'}`}>{g.checked && <Icons.Check size={14} className="text-white" />}</div>
+                                        </Card>
+                                    ))}
+                                    <button onClick={() => { setQuickAddType('grocery'); setIsQuickAddOpen(true); }} className="w-full py-3 text-slate-400 font-bold text-sm uppercase">+ Add Item</button>
+                                </div>
                             </div>
+                        )}
+                    </div>
 
-                            {/* Mobile Header */}
-                            <header className="md:hidden fixed top-0 left-0 right-0 h-14 bg-white/90 dark:bg-slate-900/90 backdrop-blur-lg border-b border-slate-100 dark:border-slate-800 z-50 px-4 flex items-center justify-between">
-                                <div className="flex items-center space-x-2">
-                                    <div className="bg-indigo-600 p-1.5 rounded-lg"><Icons.Brain size={18} className="text-white" /></div>
-                                    <span className="font-bold text-lg dark:text-white">LifeOS</span>
+                    {/* Bottom Nav */}
+                    <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 pb-safe pt-2 px-6 flex justify-between items-center z-50 h-20">
+                        <button onClick={() => setActiveTab('dashboard')} className={`flex flex-col items-center gap-1 ${activeTab === 'dashboard' ? 'text-indigo-600' : 'text-slate-400'}`}><Icons.Activity /><span className="text-[10px] font-bold uppercase">Today</span></button>
+                        <button onClick={() => { setQuickAddType('task'); setIsQuickAddOpen(true); }} className="bg-indigo-600 text-white p-4 rounded-full shadow-lg shadow-indigo-500/30 -mt-8 border-4 border-slate-50 dark:border-slate-950"><Icons.Plus /></button>
+                        <button onClick={() => setActiveTab('kitchen')} className={`flex flex-col items-center gap-1 ${activeTab === 'kitchen' ? 'text-indigo-600' : 'text-slate-400'}`}><Icons.ShoppingBag /><span className="text-[10px] font-bold uppercase">Food</span></button>
+                        <button onClick={() => setActiveTab('progress')} className={`flex flex-col items-center gap-1 ${activeTab === 'progress' ? 'text-indigo-600' : 'text-slate-400'}`}><Icons.TrendingUp /><span className="text-[10px] font-bold uppercase">Stats</span></button>
+                    </div>
+
+                    {/* Quick Add Modal */}
+                    <Modal isOpen={isQuickAddOpen} onClose={() => setIsQuickAddOpen(false)} title="Quick Add">
+                        <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
+                            {['task', 'weight', 'grocery'].map(t => (
+                                <button key={t} onClick={() => setQuickAddType(t)} className={`px-4 py-2 rounded-full text-xs font-bold uppercase transition ${quickAddType === t ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-500 dark:bg-slate-800'}`}>{t}</button>
+                            ))}
+                        </div>
+                        <form onSubmit={handleQuickAdd} className="space-y-4">
+                            {quickAddType === 'task' && <input name="title" placeholder="What needs doing?" className="w-full p-4 rounded-xl bg-slate-50 dark:bg-slate-800 dark:text-white outline-none" autoFocus />}
+                            {quickAddType === 'weight' && <input name="weight" type="number" step="0.1" placeholder="Current weight (lbs)" className="w-full p-4 rounded-xl bg-slate-50 dark:bg-slate-800 dark:text-white outline-none" autoFocus />}
+                            {quickAddType === 'grocery' && <input name="item" placeholder="Item name" className="w-full p-4 rounded-xl bg-slate-50 dark:bg-slate-800 dark:text-white outline-none" autoFocus />}
+                            <button className="w-full py-4 bg-indigo-600 text-white font-bold rounded-xl shadow-lg">Save</button>
+                        </form>
+                    </Modal>
+
+                    {/* Meal Popover */}
+                    {mealPopoverOpen && (
+                         <div className="fixed inset-0 bg-black/40 z-[60] flex items-end justify-center p-4" onClick={() => setMealPopoverOpen(false)}>
+                            <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-3xl p-6 animate-toast space-y-3" onClick={e => e.stopPropagation()}>
+                                <h3 className="font-bold text-center dark:text-white mb-4">Log Meal</h3>
+                                <div className="p-3 bg-yellow-50 text-yellow-800 text-xs font-bold rounded-xl text-center mb-4 border border-yellow-100">
+                                    ⚠️ Watch Cholesterol: Avoid saturated fats.
                                 </div>
-                                <button onClick={() => setActiveTab('settings')} className="p-2 text-slate-400 hover:text-slate-600"><Icons.Settings size={20} /></button>
-                            </header>
-
-                            {/* Sidebar */}
-                            <aside className="hidden md:flex fixed top-0 left-0 h-full w-64 bg-white dark:bg-slate-900 border-r border-slate-100 dark:border-slate-800 p-6 flex-col">
-                                <div className="flex items-center space-x-2 mb-10"><div className="bg-indigo-600 p-2 rounded-xl"><Icons.Brain className="text-white" /></div><span className="font-bold text-2xl dark:text-white tracking-tight">LifeOS</span></div>
-                                <nav className="flex-1 space-y-1">
-                                    {[{id:'dashboard', icon:Icons.Activity, label:'Home'}, {id:'calendar', icon:Icons.Calendar, label:'Calendar'}, {id:'progress', icon:Icons.TrendingUp, label:'Progress'}, {id:'tasks', icon:Icons.CheckCircle, label:'Tasks'}, {id:'golf', icon:Icons.Flag, label:'Golf'}, {id:'groceries', icon:Icons.ShoppingBag, label:'Kitchen'}, {id:'settings', icon:Icons.Settings, label:'Settings'}].map(nav => (
-                                        <button key={nav.id} onClick={() => setActiveTab(nav.id)} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition ${activeTab === nav.id ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800'}`}><nav.icon size={20} /><span className="font-medium">{nav.label}</span></button>
-                                    ))}
-                                </nav>
-                                <button onClick={() => setFocusMode(true)} className="w-full py-4 border-2 border-dashed border-slate-200 text-slate-400 rounded-2xl font-bold hover:border-indigo-400 hover:text-indigo-500 transition">Enter Focus</button>
-                            </aside>
-
-                            {/* Mobile Nav */}
-                            <nav className="md:hidden fixed bottom-0 left-0 right-0 h-20 bg-white/90 dark:bg-slate-900/90 backdrop-blur-lg border-t border-slate-100 dark:border-slate-800 z-50 px-6 flex justify-between items-center">
-                                <button onClick={() => setActiveTab('dashboard')} className={activeTab === 'dashboard' ? 'text-indigo-600' : 'text-slate-400'}><Icons.Activity /></button>
-                                <button onClick={() => setActiveTab('calendar')} className={activeTab === 'calendar' ? 'text-indigo-600' : 'text-slate-400'}><Icons.Calendar /></button>
-                                <button onClick={() => openQuickAdd(getSmartQuickAddType())} className="mb-10 bg-indigo-600 text-white p-4 rounded-full shadow-xl"><Icons.Plus /></button>
-                                <button onClick={() => setActiveTab('progress')} className={activeTab === 'progress' ? 'text-indigo-600' : 'text-slate-400'}><Icons.TrendingUp /></button>
-                                <button onClick={() => setActiveTab('groceries')} className={activeTab === 'groceries' ? 'text-indigo-600' : 'text-slate-400'}><Icons.ShoppingBag /></button>
-                            </nav>
-
-                            <main className="md:pl-64 p-6 pt-20 md:pt-8 max-w-lg mx-auto min-h-screen">
-                                {activeTab === 'dashboard' && <Dashboard />}
-                                {activeTab === 'calendar' && <CalendarView />}
-                                {activeTab === 'progress' && <ProgressView />}
-                                {activeTab === 'tasks' && <TasksView />}
-                                {activeTab === 'golf' && <GolfView />}
-                                {activeTab === 'groceries' && <ShopView />}
-                                {activeTab === 'settings' && <SettingsView />}
-                            </main>
-
-                            {/* Quick Add Modal */}
-                            <Modal isOpen={isQuickAddOpen} onClose={() => setIsQuickAddOpen(false)} title="Quick Add">
-                                <div className="flex space-x-4 mb-4 border-b dark:border-slate-800 pb-2 overflow-x-auto no-scrollbar">
-                                    {['task', 'note', 'meal', 'workout', 'round', 'stats', 'grocery', 'event'].map(t => (
-                                        <button key={t} onClick={() => setQuickAddType(t)} className={`text-xs font-bold uppercase pb-2 border-b-2 transition ${quickAddType === t ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-slate-400'}`}>{t}</button>
-                                    ))}
-                                </div>
-                                <form onSubmit={handleQuickAdd} className="space-y-4">
-                                    {quickAddType === 'task' && (
-                                        <>
-                                            <input name="title" placeholder="Task name" className="w-full p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 dark:text-white outline-none" required />
-                                            <div className="flex space-x-3">
-                                                <select name="energy" className="flex-1 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 dark:text-white outline-none"><option value="low">Low Energy</option><option value="medium">Medium</option><option value="high">High</option></select>
-                                                <select name="category" className="flex-1 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 dark:text-white outline-none"><option value="personal">Personal</option><option value="work">Work</option></select>
-                                                <input name="time" type="number" inputMode="decimal" placeholder="Mins" className="w-24 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 dark:text-white outline-none" required />
-                                            </div>
-                                        </>
-                                    )}
-                                    {quickAddType === 'note' && (
-                                        <input name="title" placeholder="Brain dump... what's on your mind?" className="w-full p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 dark:text-white outline-none h-32" required autoFocus />
-                                    )}
-                                    {quickAddType === 'round' && (<><input name="course" placeholder="Course" className="w-full p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 dark:text-white outline-none" required /><div className="grid grid-cols-2 gap-2"><input name="score" type="number" inputMode="decimal" placeholder="Score" className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 dark:text-white outline-none" required /><input name="putts" type="number" inputMode="decimal" placeholder="Putts" className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 dark:text-white outline-none" /><input name="gir" type="number" inputMode="decimal" placeholder="GIR" className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 dark:text-white outline-none" /><input name="fairways" type="number" inputMode="decimal" placeholder="FWY" className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 dark:text-white outline-none" /></div></>)}
-                                    {quickAddType === 'stats' && (<div className="space-y-4"><div><label className="text-xs font-bold text-slate-400 uppercase">Recovery %</label><input name="recovery" type="number" inputMode="decimal" defaultValue={fitness.recovery} className="w-full p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 dark:text-white outline-none" /></div><div><label className="text-xs font-bold text-slate-400 uppercase">Calories</label><input name="calories" type="number" inputMode="decimal" defaultValue={fitness.calories} className="w-full p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 dark:text-white outline-none" /></div></div>)}
-                                    {quickAddType === 'meal' && (<div className="space-y-4"><select name="mealType" className="w-full p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 dark:text-white outline-none"><option value="Breakfast">Breakfast</option><option value="Lunch">Lunch</option><option value="Dinner">Dinner</option><option value="Snack">Snack</option></select><input name="items" placeholder="What did you eat?" className="w-full p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 dark:text-white outline-none" /></div>)}
-                                    {quickAddType === 'grocery' && (<div className="space-y-4"><input name="item" placeholder="Item name..." className="w-full p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 dark:text-white outline-none" required /><select name="category" className="w-full p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 dark:text-white outline-none"><option value="Produce">Produce</option><option value="Dairy">Dairy</option><option value="Meat">Meat</option><option value="Pantry">Pantry</option><option value="Other">Other</option></select></div>)}
-                                    {quickAddType === 'workout' && (<div className="space-y-4"><input name="workoutType" placeholder="Workout type (e.g. Run, Lift)" className="w-full p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 dark:text-white outline-none" required /></div>)}
-                                    {quickAddType === 'event' && (<div className="space-y-4"><input name="title" placeholder="Event Title" className="w-full p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 dark:text-white outline-none" required /><input name="time" type="time" className="w-full p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 dark:text-white outline-none" required /></div>)}
-                                    <button type="submit" className="w-full py-4 bg-indigo-600 text-white font-bold rounded-2xl">Save</button>
-                                </form>
-                            </Modal>
-
-                            {/* Schedule Modal */}
-                            <Modal isOpen={scheduleModalOpen} onClose={() => setScheduleModalOpen(false)} title="Today's Schedule">
-                                {events.filter(e => new Date(e.date).toDateString() === new Date().toDateString()).length > 0 ? (
-                                    <div className="space-y-3">
-                                        {events.filter(e => new Date(e.date).toDateString() === new Date().toDateString()).map(ev => (
-                                            <div key={ev.id} className="flex justify-between items-center p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
-                                                <div>
-                                                    <div className="font-bold dark:text-white">{ev.title}</div>
-                                                    <div className="text-xs text-slate-400">{formatTime12Hour(ev.time)}</div>
-                                                </div>
-                                                <button onClick={() => deleteEvent(ev.id)} className="text-slate-400 hover:text-red-500"><Icons.Trash2 size={18} /></button>
-                                            </div>
-                                        ))}
-                                    </div>
-                                ) : <EmptyState emoji="📅" message="No events scheduled today." />}
-                                <button onClick={() => { setScheduleModalOpen(false); openQuickAdd('event'); }} className="w-full mt-4 py-3 bg-indigo-100 text-indigo-700 font-bold rounded-xl">+ Add New Event</button>
-                            </Modal>
-
-                            <ConfirmDialog isOpen={!!confirmData} title={confirmData?.title} message={confirmData?.message} isDestructive={true} onConfirm={() => { confirmData.action(); setConfirmData(null); }} onCancel={() => setConfirmData(null)} />
-                        </>
+                                <button onClick={() => logMeal('Breakfast', true)} className="w-full p-4 bg-green-50 text-green-700 font-bold rounded-xl border border-green-100">Healthy Breakfast (Oats/Fruit)</button>
+                                <button onClick={() => logMeal('Lunch')} className="w-full p-4 bg-slate-50 text-slate-700 font-bold rounded-xl">Lunch</button>
+                                <button onClick={() => logMeal('Dinner')} className="w-full p-4 bg-slate-50 text-slate-700 font-bold rounded-xl">Dinner</button>
+                                <button onClick={() => logMeal('Snack')} className="w-full p-4 bg-slate-50 text-slate-700 font-bold rounded-xl">Snack</button>
+                            </div>
+                        </div>
                     )}
+
+                    {/* Reading Popover */}
+                     {readPopoverOpen && (
+                         <div className="fixed inset-0 bg-black/40 z-[60] flex items-end justify-center p-4" onClick={() => setReadPopoverOpen(false)}>
+                            <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-3xl p-6 animate-toast space-y-3" onClick={e => e.stopPropagation()}>
+                                <h3 className="font-bold text-center dark:text-white mb-2">Reading Log</h3>
+                                <div className="text-center text-xs text-slate-400 mb-4">{user.currentBook}</div>
+                                <div className="flex gap-3">
+                                    <button onClick={() => { setMindfulness(p => ({...p, readPages: p.readPages + 5})); showToast("+5 Pages"); }} className="flex-1 p-4 bg-slate-50 font-bold rounded-xl text-slate-600 hover:bg-indigo-50 hover:text-indigo-600">+5</button>
+                                    <button onClick={() => { setMindfulness(p => ({...p, readPages: p.readPages + 10})); showToast("+10 Pages"); }} className="flex-1 p-4 bg-slate-50 font-bold rounded-xl text-slate-600 hover:bg-indigo-50 hover:text-indigo-600">+10</button>
+                                    <button onClick={() => { setMindfulness(p => ({...p, readPages: p.readPages + 20})); showToast("+20 Pages", "success", 10); triggerConfetti(); setReadPopoverOpen(false); }} className="flex-1 p-4 bg-indigo-600 text-white font-bold rounded-xl shadow-lg shadow-indigo-200">+20</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Toasts */}
+                    <div className="fixed bottom-24 left-0 right-0 pointer-events-none flex flex-col items-center gap-2 z-[70]">
+                        {toasts.map(t => (
+                            <div key={t.id} className="bg-slate-900 text-white px-6 py-3 rounded-full shadow-2xl animate-toast font-bold flex items-center gap-2">
+                                {t.message} {t.points > 0 && <span className="text-green-400 text-xs">+{t.points} pts</span>}
+                            </div>
+                        ))}
+                    </div>
+
                 </div>
             );
         }
 
-        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
     </script>
 </body>
 </html>
