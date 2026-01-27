@@ -122,7 +122,7 @@
             strength: false,
             exercisesCompleted: 0,
             devotional: false,
-            pagesRead: 0,
+            readingLog: {}, // { bookId: pagesToday }
             water: 0,
             meals: [
                 { name: 'Breakfast', done: false, details: '', healthy: true },
@@ -135,9 +135,10 @@
         const DEFAULT_USER = {
             weight: 170.2, 
             goalWeight: 162.0, 
-            readGoal: 20,
-            currentBook: "The Mental Game",
-            customExercises: { strength: [], pilates: [], yoga: [], stretch: [] }
+            customExercises: { strength: [], pilates: [], yoga: [], stretch: [] },
+            books: [
+                { id: 'b1', title: 'The Mental Game', goal: 20 }
+            ]
         };
 
         // --- Icons ---
@@ -159,7 +160,8 @@
                 home: <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />,
                 share: <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />,
                 shareArrow: <polyline points="16 6 12 2 8 6" />,
-                plus: <path d="M12 5v14M5 12h14" />
+                plus: <path d="M12 5v14M5 12h14" />,
+                trash: <polyline points="3 6 5 6 21 6" />
             };
             if(name === 'shareIos') {
                 return (
@@ -167,6 +169,14 @@
                         <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
                         <polyline points="16 6 12 2 8 6" />
                         <line x1="12" y1="2" x2="12" y2="15" />
+                    </svg>
+                )
+            }
+            if(name === 'trash') {
+                 return (
+                    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                        <polyline points="3 6 5 6 21 6" />
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
                     </svg>
                 )
             }
@@ -232,6 +242,36 @@
             );
         };
 
+        const AddBookOverlay = ({ onClose, onSave }) => {
+            const [title, setTitle] = useState('');
+            const [goal, setGoal] = useState(20);
+
+            return (
+                <div className="fixed inset-0 z-[100] flex items-end justify-center sm:items-center">
+                    <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
+                    <div className="relative w-full max-w-lg bg-zinc-900 rounded-t-3xl sm:rounded-3xl border-t sm:border border-white/10 animate-slide-up flex flex-col overflow-hidden">
+                        <div className="p-5 border-b border-white/5 flex justify-between items-center bg-zinc-900">
+                            <h2 className="font-display font-bold text-2xl uppercase tracking-tighter">Add Book</h2>
+                            <button onClick={onClose} className="p-2 bg-zinc-800 rounded-full text-zinc-400"><Icon name="cross" size={20}/></button>
+                        </div>
+                        <div className="p-6 space-y-6">
+                            <div>
+                                <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Book Title</label>
+                                <input className="w-full bg-zinc-800 rounded-xl p-4 text-white placeholder-zinc-600 outline-none focus:ring-2 focus:ring-white" placeholder="e.g. Atomic Habits" value={title} onChange={(e) => setTitle(e.target.value)} autoFocus />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Daily Page Goal</label>
+                                <input type="number" className="w-full bg-zinc-800 rounded-xl p-4 text-white placeholder-zinc-600 outline-none focus:ring-2 focus:ring-white" value={goal} onChange={(e) => setGoal(parseInt(e.target.value))} />
+                            </div>
+                        </div>
+                        <div className="p-5 border-t border-white/5 bg-zinc-900">
+                            <button onClick={() => onSave(title, goal)} className="w-full py-4 rounded-2xl font-display font-bold text-xl uppercase tracking-widest bg-white text-black shadow-lg">Start Reading</button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
         const WorkoutOverlay = ({ onClose, onComplete, customExercises = {}, onAddExercise }) => {
             const [activeTab, setActiveTab] = useState('strength');
             const [checked, setChecked] = useState({});
@@ -269,7 +309,6 @@
                                     <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${checked[ex] ? `border-transparent ${WORKOUTS[activeTab].bg} text-black` : 'border-zinc-700'}`}>{checked[ex] && <Icon name="check" size={14} />}</div>
                                 </div>
                             ))}
-                            {/* Add New Input */}
                             <div className="pt-2 border-t border-white/5 mt-4">
                                 <div className="flex gap-2">
                                     <input 
@@ -326,6 +365,9 @@
                                 {[...history].sort((a,b) => new Date(b.date) - new Date(a.date)).map((entry, i) => {
                                     const trackers = entry.trackers || {};
                                     const meals = trackers.meals || [];
+                                    const readingLog = trackers.readingLog || {};
+                                    const totalPages = Object.values(readingLog).reduce((a, b) => a + b, 0);
+
                                     return (
                                         <div key={i} className="bg-card-bg rounded-3xl p-5 border border-white/5">
                                             <div className="flex justify-between items-center mb-4">
@@ -339,6 +381,7 @@
                                                 {trackers.mileRun && <div className="bg-neon-lime/20 text-neon-lime px-2 py-1 rounded text-[10px] font-bold uppercase">1 Mile</div>}
                                                 {trackers.strength && <div className="bg-neon-lime/20 text-neon-lime px-2 py-1 rounded text-[10px] font-bold uppercase">Lift</div>}
                                                 {trackers.devotional && <div className="bg-white/20 text-white px-2 py-1 rounded text-[10px] font-bold uppercase">Devo</div>}
+                                                {totalPages > 0 && <div className="bg-white/20 text-white px-2 py-1 rounded text-[10px] font-bold uppercase">{totalPages} PGS</div>}
                                             </div>
                                             <div className="space-y-1 pt-3 border-t border-white/5">
                                                 {meals.filter(m => m.done).map((m, idx) => (
@@ -347,7 +390,6 @@
                                                         <span className="truncate max-w-[150px]">{m.details || 'Logged'}</span>
                                                     </div>
                                                 ))}
-                                                {meals.filter(m => m.done).length === 0 && <div className="text-xs text-zinc-700 italic">No food logged.</div>}
                                             </div>
                                         </div>
                                     );
@@ -373,17 +415,21 @@
             const [libs, setLibs] = useState(null);
             const [authUser, setAuthUser] = useState(null);
             const [view, setView] = useState('dashboard');
-            const [date, setDate] = useState(new Date());
+            
+            const [currentDateStr, setCurrentDateStr] = useState(new Date().toLocaleDateString('en-CA'));
+            const [dateDisplay, setDateDisplay] = useState(new Date());
+
             const [userProfile, setUserProfile] = useState(DEFAULT_USER);
             const [trackers, setTrackers] = useState(DEFAULT_TRACKERS);
             const [history, setHistory] = useState([]);
             const [loading, setLoading] = useState(true);
             const [errorMsg, setErrorMsg] = useState(null);
+            
             const [showWorkoutModal, setShowWorkoutModal] = useState(false);
             const [showFoodModal, setShowFoodModal] = useState(false);
+            const [showBookModal, setShowBookModal] = useState(false);
             const [activeMealIndex, setActiveMealIndex] = useState(null);
 
-            // Wait for Firebase Scripts to Load
             useEffect(() => {
                 const checkLibs = setInterval(() => {
                     if (window.FirebaseLib) {
@@ -394,7 +440,17 @@
                 return () => clearInterval(checkLibs);
             }, []);
 
-            // Initialize App once libs are ready
+            useEffect(() => {
+                const timer = setInterval(() => {
+                    const nowStr = new Date().toLocaleDateString('en-CA');
+                    if (nowStr !== currentDateStr) {
+                        setCurrentDateStr(nowStr);
+                        setDateDisplay(new Date());
+                    }
+                }, 60000);
+                return () => clearInterval(timer);
+            }, [currentDateStr]);
+
             const { app, auth, db, appId } = useMemo(() => {
                 if (!libs) return {};
                 const app = libs.initializeApp(firebaseConfig);
@@ -404,48 +460,46 @@
                 return { app, auth, db, appId };
             }, [libs]);
 
-            // Authentication
             useEffect(() => {
                 if (!auth || !libs) return;
-                
                 const performAuth = async () => {
                     try {
                         await libs.signInAnonymously(auth);
                     } catch (err) {
-                        console.error("Auth Error", err);
-                        setErrorMsg(`Authentication Error: ${err.message}. Ensure 'Anonymous' is enabled in Firebase Console.`);
+                        setErrorMsg(`Authentication Error: ${err.message}.`);
                     }
                 };
                 performAuth();
-
-                return libs.onAuthStateChanged(auth, (u) => {
-                    if (u) setAuthUser(u);
-                });
+                return libs.onAuthStateChanged(auth, (u) => { if (u) setAuthUser(u); });
             }, [auth, libs]);
 
-            // Data Sync
             useEffect(() => {
                 if (!authUser || !db || !libs) return;
 
                 const userId = authUser.uid;
-                const todayStr = new Date().toISOString().split('T')[0];
+                const todayLogRef = libs.doc(db, 'artifacts', appId, 'users', userId, 'logs', currentDateStr);
                 const profileRef = libs.doc(db, 'artifacts', appId, 'users', userId, 'data', 'profile');
-                const todayLogRef = libs.doc(db, 'artifacts', appId, 'users', userId, 'logs', todayStr);
                 const historyRef = libs.collection(db, 'artifacts', appId, 'users', userId, 'logs');
 
                 const unsubProfile = libs.onSnapshot(profileRef, (docSnap) => {
-                    if (docSnap.exists()) setUserProfile(docSnap.data());
-                    else libs.setDoc(profileRef, DEFAULT_USER);
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        // Migration logic for old book format
+                        if (!data.books && data.currentBook) {
+                            data.books = [{ id: 'legacy', title: data.currentBook, goal: data.readGoal || 20 }];
+                        }
+                        setUserProfile(data.books ? data : { ...data, books: DEFAULT_USER.books });
+                    } else libs.setDoc(profileRef, DEFAULT_USER);
                 });
 
                 const unsubToday = libs.onSnapshot(todayLogRef, (docSnap) => {
-                    if (docSnap.exists()) setTrackers(docSnap.data().trackers);
-                    else libs.setDoc(todayLogRef, { date: todayStr, trackers: DEFAULT_TRACKERS, score: 0 });
+                    if (docSnap.exists()) {
+                        setTrackers(docSnap.data().trackers);
+                    } else {
+                        libs.setDoc(todayLogRef, { date: currentDateStr, trackers: DEFAULT_TRACKERS, score: 0 });
+                    }
                     setLoading(false);
-                }, (err) => {
-                    console.error("Firestore Error", err);
-                    setErrorMsg(`Database Error: ${err.message}. Check your Security Rules.`);
-                });
+                }, (err) => setErrorMsg(`Database Error: ${err.message}`));
 
                 const q = libs.query(historyRef, libs.orderBy('date', 'desc'), libs.limit(30));
                 const unsubHistory = libs.onSnapshot(q, (qs) => {
@@ -455,7 +509,7 @@
                 });
 
                 return () => { unsubProfile(); unsubToday(); unsubHistory(); };
-            }, [authUser, db, libs]);
+            }, [authUser, db, libs, currentDateStr]);
 
             const calculateScore = useCallback((t, u) => {
                 if (!t || !u) return 0;
@@ -466,18 +520,23 @@
                 const waterScore = Math.min(10, t.water * 1.5);
                 pts += Math.min(30, mealScore + waterScore);
                 if (t.devotional) pts += 15;
-                if (t.pagesRead >= u.readGoal) pts += 15;
-                return Math.round((pts / total) * 100); // Approximate
+                
+                // Book Score: 15pts if ANY reading done towards goal
+                const totalPages = t.readingLog ? Object.values(t.readingLog).reduce((a,b)=>a+b,0) : 0;
+                const totalGoal = u.books ? u.books.reduce((a,b)=>a+b.goal,0) : 20;
+                if (totalPages >= totalGoal && totalGoal > 0) pts += 15;
+                else if (totalPages > 0) pts += Math.round((totalPages / totalGoal) * 15);
+
+                return Math.round((pts / total) * 100);
             }, []);
 
             const score = useMemo(() => calculateScore(trackers, userProfile), [trackers, userProfile]);
 
             const updateTrackers = async (newTrackers) => {
                 if (!authUser || !libs) return;
-                const todayStr = new Date().toISOString().split('T')[0];
-                const todayLogRef = libs.doc(db, 'artifacts', appId, 'users', authUser.uid, 'logs', todayStr);
+                const todayLogRef = libs.doc(db, 'artifacts', appId, 'users', authUser.uid, 'logs', currentDateStr);
                 setTrackers(newTrackers);
-                await libs.setDoc(todayLogRef, { date: todayStr, trackers: newTrackers, score: calculateScore(newTrackers, userProfile) }, { merge: true });
+                await libs.setDoc(todayLogRef, { date: currentDateStr, trackers: newTrackers, score: calculateScore(newTrackers, userProfile) }, { merge: true });
             };
 
             const updateUser = async (newUser) => {
@@ -506,12 +565,21 @@
             };
             const handleAddExercise = (category, exercise) => {
                 const currentCustom = userProfile.customExercises || {};
-                const categoryExercises = currentCustom[category] || [];
-                const updatedCustom = {
-                    ...currentCustom,
-                    [category]: [...categoryExercises, exercise]
-                };
+                const updatedCustom = { ...currentCustom, [category]: [...(currentCustom[category] || []), exercise] };
                 updateUser({ ...userProfile, customExercises: updatedCustom });
+            };
+            
+            const handleAddBook = (title, goal) => {
+                const newBook = { id: Date.now().toString(), title, goal };
+                updateUser({ ...userProfile, books: [...(userProfile.books || []), newBook] });
+                setShowBookModal(false);
+            };
+            const handleDeleteBook = (id) => {
+                updateUser({ ...userProfile, books: userProfile.books.filter(b => b.id !== id) });
+            };
+            const handleUpdatePages = (bookId, newPages) => {
+                const currentLog = trackers.readingLog || {};
+                updateTrackers({ ...trackers, readingLog: { ...currentLog, [bookId]: Math.max(0, newPages) } });
             };
 
             if (errorMsg) return <div className="min-h-screen bg-dark-bg flex flex-col items-center justify-center p-8 text-center"><div className="text-red-500 font-bold text-xl mb-2">ERROR</div><p className="text-white text-sm">{errorMsg}</p></div>;
@@ -521,7 +589,7 @@
             return (
                 <div className="min-h-screen bg-dark-bg text-white pb-10 font-sans selection:bg-neon-lime selection:text-black">
                     <header className="fixed top-0 left-0 right-0 z-50 glass px-6 py-4 flex justify-between items-center">
-                        <div><h1 className="font-display font-bold text-2xl tracking-tighter leading-none text-white">JASMINE <span className="text-neon-lime">OS</span></h1><p className="text-[10px] font-bold text-zinc-500 tracking-widest uppercase">{date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}</p></div>
+                        <div><h1 className="font-display font-bold text-2xl tracking-tighter leading-none text-white">JASMINE <span className="text-neon-lime">OS</span></h1><p className="text-[10px] font-bold text-zinc-500 tracking-widest uppercase">{dateDisplay.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}</p></div>
                         <div className="flex items-center gap-4"><button onClick={() => setView('history')} className="text-zinc-500 hover:text-white transition-colors"><div className="flex flex-col items-center"><Icon name="history" size={20} /><span className="text-[9px] font-bold uppercase mt-0.5">Logs</span></div></button><div className="w-10 h-10 rounded-full bg-zinc-800 border-2 border-zinc-700 flex items-center justify-center relative"><svg className="w-full h-full -rotate-90" viewBox="0 0 36 36"><path className="text-zinc-900" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="4" /><path className="text-neon-lime transition-all duration-1000 ease-out" strokeDasharray={`${score}, 100`} d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="4" /></svg><div className="absolute inset-0 flex items-center justify-center text-[10px] font-bold">{score}</div></div></div>
                     </header>
                     <main className="pt-24 px-4 space-y-4 max-w-lg mx-auto pb-safe">
@@ -544,13 +612,39 @@
                             </Tile>
                         </section>
                         <section className="grid grid-cols-1 gap-3">
-                             <div className="flex justify-between items-end px-1"><h2 className="text-sm font-bold text-zinc-400 uppercase tracking-widest">Mental Reps</h2></div>
+                             <div className="flex justify-between items-end px-1">
+                                 <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-widest">Mental Reps</h2>
+                                 <button onClick={() => setShowBookModal(true)} className="text-[10px] font-bold text-white bg-zinc-800 px-2 py-1 rounded hover:bg-zinc-700">+ Add Book</button>
+                             </div>
                             <Tile onClick={() => toggleTracker('devotional')} className={`flex items-center justify-between py-4 transition-colors ${trackers.devotional ? 'bg-zinc-800 border-l-4 border-l-white' : 'bg-zinc-900 border-l-4 border-l-transparent'}`}><div className="flex items-center gap-4"><div className={`w-10 h-10 rounded-full flex items-center justify-center ${trackers.devotional ? 'bg-white text-black' : 'bg-zinc-800 text-zinc-500'}`}><Icon name="book" size={18} /></div><div><div className={`font-display font-bold text-xl uppercase ${trackers.devotional ? 'text-white' : 'text-zinc-500'}`}>Devotional</div><div className="text-[10px] font-bold uppercase text-zinc-600">Spirit & Focus</div></div></div><div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${trackers.devotional ? 'bg-white border-white' : 'border-zinc-700'}`}>{trackers.devotional && <Icon name="check" size={14} className="text-black" />}</div></Tile>
-                            <Tile className="bg-zinc-900"><div className="flex justify-between items-center mb-2"><span className="text-xs font-bold uppercase text-zinc-400">{userProfile.currentBook}</span><span className="text-xs font-bold text-white">{trackers.pagesRead} <span className="text-zinc-500">/ {userProfile.readGoal} PGS</span></span></div><input type="range" min="0" max="50" value={trackers.pagesRead} onChange={(e) => updateTrackers({...trackers, pagesRead: parseInt(e.target.value)})} /><div className="flex justify-between mt-4"><button onClick={() => updateTrackers({...trackers, pagesRead: Math.max(0, trackers.pagesRead - 5)})} className="text-xs font-bold text-zinc-500 uppercase px-4 py-2 bg-zinc-800 rounded-lg">-5</button><button onClick={() => updateTrackers({...trackers, pagesRead: trackers.pagesRead + 5})} className="text-xs font-bold text-black uppercase px-4 py-2 bg-white rounded-lg">+5</button></div></Tile>
+                            
+                            <Tile className="bg-zinc-900 space-y-4">
+                                {(userProfile.books || []).map(book => {
+                                    const pagesToday = (trackers.readingLog || {})[book.id] || 0;
+                                    return (
+                                        <div key={book.id} className="pb-4 border-b border-white/5 last:border-0 last:pb-0">
+                                            <div className="flex justify-between items-center mb-2">
+                                                <div className="flex items-center gap-2">
+                                                    <button onClick={() => handleDeleteBook(book.id)} className="text-zinc-600 hover:text-red-500"><Icon name="trash" size={12}/></button>
+                                                    <span className="text-xs font-bold uppercase text-zinc-400">{book.title}</span>
+                                                </div>
+                                                <span className="text-xs font-bold text-white">{pagesToday} <span className="text-zinc-500">/ {book.goal} PGS</span></span>
+                                            </div>
+                                            <input type="range" min="0" max={Math.max(50, book.goal * 2)} value={pagesToday} onChange={(e) => handleUpdatePages(book.id, parseInt(e.target.value))} />
+                                            <div className="flex justify-between mt-2">
+                                                <button onClick={() => handleUpdatePages(book.id, pagesToday - 5)} className="text-[10px] font-bold text-zinc-500 uppercase px-3 py-1 bg-zinc-800 rounded-lg">-5</button>
+                                                <button onClick={() => handleUpdatePages(book.id, pagesToday + 5)} className="text-[10px] font-bold text-black uppercase px-3 py-1 bg-white rounded-lg">+5</button>
+                                            </div>
+                                        </div>
+                                    )
+                                })}
+                                {(userProfile.books || []).length === 0 && <div className="text-center text-zinc-600 text-xs py-2">No books added yet.</div>}
+                            </Tile>
                         </section>
                     </main>
                     {showWorkoutModal && (<WorkoutOverlay onClose={() => setShowWorkoutModal(false)} onComplete={handleSessionComplete} customExercises={userProfile.customExercises} onAddExercise={handleAddExercise} />)}
                     {showFoodModal && (<FoodLogOverlay mealName={trackers.meals[activeMealIndex].name} onClose={() => setShowFoodModal(false)} onSave={handleFoodSave} />)}
+                    {showBookModal && (<AddBookOverlay onClose={() => setShowBookModal(false)} onSave={handleAddBook} />)}
                 </div>
             );
         }
