@@ -5,515 +5,806 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Jasmine's LifeOS</title>
+    <title>Jasmine TRAIN_OS</title>
+    
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React & ReactDOM -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- Firebase Configuration & SDK Setup -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot, collection, query, limit, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Expose Firebase functions to the global window object for Babel script to access
+        window.FirebaseLib = {
+            initializeApp,
+            getAuth,
+            signInAnonymously,
+            onAuthStateChanged,
+            signInWithCustomToken,
+            getFirestore,
+            doc,
+            setDoc,
+            onSnapshot,
+            collection,
+            query,
+            limit,
+            orderBy
+        };
+    </script>
     
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap');
-        
-        body { 
-            font-family: 'Inter', sans-serif; 
-            -webkit-tap-highlight-color: transparent;
-            overscroll-behavior-y: none;
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&family=Saira+Condensed:wght@400;600;800&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Saira Condensed', 'sans-serif'],
+                    },
+                    colors: {
+                        'neon-lime': '#ccff00',
+                        'neon-orange': '#ff5e00',
+                        'neon-cyan': '#00f0ff',
+                        'neon-pink': '#ff00ff',
+                        'dark-bg': '#09090b',
+                        'card-bg': '#18181b',
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'fill-up': 'fillUp 0.5s ease-out forwards',
+                        'slide-up': 'slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                    },
+                    keyframes: {
+                        fillUp: {
+                            '0%': { width: '0%' },
+                            '100%': { width: '100%' },
+                        },
+                        slideUp: {
+                            '0%': { transform: 'translateY(100%)' },
+                            '100%': { transform: 'translateY(0)' },
+                        }
+                    }
+                }
+            }
         }
-        
-        .transition-all { transition-property: all; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 300ms; }
+    </script>
+
+    <style>
+        body { background-color: #09090b; color: white; -webkit-tap-highlight-color: transparent; }
+        .glass { background: rgba(24, 24, 27, 0.6); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); }
+        .glass-solid { background: rgba(24, 24, 27, 0.95); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
+        .glow-lime { box-shadow: 0 0 20px rgba(204, 255, 0, 0.15); }
+        .glow-cyan { box-shadow: 0 0 20px rgba(0, 240, 255, 0.15); }
         
         /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 4px; height: 4px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar { width: 0px; background: transparent; }
         
-        /* Animations */
-        @keyframes checkmark {
-            0% { stroke-dashoffset: 24; }
-            100% { stroke-dashoffset: 0; }
+        input[type="range"] {
+            -webkit-appearance: none; width: 100%; background: transparent;
         }
-        @keyframes pop {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.2); }
-            100% { transform: scale(1); }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none; height: 20px; width: 20px; border-radius: 50%; background: #ffffff; cursor: pointer; margin-top: -8px; box-shadow: 0 0 10px rgba(255,255,255,0.5);
         }
-        @keyframes slideUp {
-            from { transform: translateY(20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
+        input[type="range"]::-webkit-slider-runnable-track {
+            width: 100%; height: 4px; cursor: pointer; background: #3f3f46; border-radius: 2px;
         }
-        @keyframes slideUpDrawer {
-            from { transform: translateY(100%); }
-            to { transform: translateY(0); }
-        }
-
-        .animate-checkmark { stroke-dasharray: 24; stroke-dashoffset: 24; animation: checkmark 0.4s ease-out forwards; }
-        .animate-pop { animation: pop 0.3s ease-out; }
-        .animate-toast { animation: slideUp 0.3s ease-out forwards; }
-        .animate-drawer { animation: slideUpDrawer 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-        
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
-        /* Confetti */
-        .confetti-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; overflow: hidden; }
-        .confetti { position: absolute; width: 10px; height: 10px; animation: fall linear forwards; }
-        @keyframes fall { to { transform: translateY(100vh) rotate(720deg); } }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-900 transition-colors duration-300 dark:bg-slate-950 dark:text-slate-100">
+<body>
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, useCallback } = React;
-
-        // --- Utilities ---
-        const vibrate = () => { if (navigator.vibrate) navigator.vibrate(10); };
+        const { useState, useEffect, useMemo, useCallback } = React;
         
-        const formatTime12Hour = (time24) => {
-            if (!time24) return '';
-            if (time24.includes('AM') || time24.includes('PM') || time24 === 'TBD') return time24;
-            const [hours, minutes] = time24.split(':');
-            const h = parseInt(hours, 10);
-            const suffix = h >= 12 ? 'PM' : 'AM';
-            const h12 = h % 12 || 12;
-            return `${h12}:${minutes} ${suffix}`;
+        // Wait for FirebaseLib to be available
+        const { initializeApp, getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken, getFirestore, doc, setDoc, onSnapshot, collection, query, limit, orderBy } = window.FirebaseLib;
+
+        // --- Data Constants ---
+        const WORKOUTS = {
+            strength: { label: "Strength", icon: "dumbbell", color: "text-neon-lime", bg: "bg-neon-lime", exercises: ["Goblet Squats (3x12)", "RDLs (3x10)", "Overhead Press (3x10)", "DB Rows (3x12)", "Walking Lunges (20)", "Plank (60s)"] },
+            pilates: { label: "Pilates", icon: "flame", color: "text-neon-pink", bg: "bg-neon-pink", exercises: ["The Hundred", "Roll Ups", "Single Leg Circles", "Rolling Like a Ball", "Criss-Cross", "Teaser Prep"] },
+            yoga: { label: "Yoga", icon: "sun", color: "text-neon-cyan", bg: "bg-neon-cyan", exercises: ["Child's Pose", "Cat-Cow Warmup", "Sun Salutation A (x3)", "Warrior II Flow", "Triangle Pose", "Savasana"] },
+            stretch: { label: "Mobility", icon: "body", color: "text-neon-orange", bg: "bg-neon-orange", exercises: ["World's Greatest Stretch", "Pigeon Pose", "Hamstring Stretch", "Butterfly", "Deep Squat Hold"] }
         };
 
-        const triggerConfetti = () => {
-            const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#00ffff', '#ff00ff'];
-            const container = document.createElement('div');
-            container.className = 'confetti-container';
-            document.body.appendChild(container);
-            for (let i = 0; i < 50; i++) {
-                const el = document.createElement('div');
-                el.className = 'confetti';
-                el.style.left = Math.random() * 100 + 'vw';
-                el.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-                el.style.animationDuration = (Math.random() * 2 + 1) + 's';
-                el.style.opacity = Math.random();
-                container.appendChild(el);
-            }
-            setTimeout(() => container.remove(), 3000);
+        const DEFAULT_TRACKERS = {
+            mileRun: false,
+            strength: false,
+            exercisesCompleted: 0,
+            devotional: false,
+            pagesRead: 0,
+            water: 0,
+            meals: [
+                { name: 'Breakfast', done: false, details: '', healthy: true },
+                { name: 'Lunch', done: false, details: '', healthy: true },
+                { name: 'Dinner', done: false, details: '', healthy: true },
+                { name: 'Snack', done: false, details: '', healthy: true },
+            ]
+        };
+
+        const DEFAULT_USER = {
+            weight: 170.2, 
+            goalWeight: 162.0, 
+            readGoal: 20,
+            currentBook: "The Mental Game"
         };
 
         // --- Icons ---
-        const IconBase = ({ path, size = 24, className = "" }) => (
-            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{path}</svg>
-        );
-
-        const Icons = {
-            Activity: (p) => <IconBase {...p} path={<polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />} />,
-            CheckCircle: (p) => <IconBase {...p} path={<><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" className="animate-checkmark" /></>} />,
-            Check: (p) => <IconBase {...p} path={<polyline points="20 6 9 17 4 12" />} />,
-            Utensils: (p) => <IconBase {...p} path={<path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2M7 2v20M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3z" />} />,
-            Calendar: (p) => <IconBase {...p} path={<><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></>} />,
-            Plus: (p) => <IconBase {...p} path={<><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></>} />,
-            Brain: (p) => <IconBase {...p} path={<path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z" />} />,
-            Trash2: (p) => <IconBase {...p} path={<><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></>} />,
-            X: (p) => <IconBase {...p} path={<><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></>} />,
-            ShoppingBag: (p) => <IconBase {...p} path={<><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" /><line x1="3" y1="6" x2="21" y2="6" /><path d="M16 10a4 4 0 0 1-8 0" /></>} />,
-            Settings: (p) => <IconBase {...p} path={<><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" /></>} />,
-            BookOpen: (p) => <IconBase {...p} path={<><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" /><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" /></>} />,
-            Scale: (p) => <IconBase {...p} path={<><rect x="4" y="16" width="16" height="6" rx="2" ry="2" /><path d="M16 16v-4a4 4 0 0 0-8 0v4" /><path d="M12 16v-4" /></>} />,
-            TrendingUp: (p) => <IconBase {...p} path={<><polyline points="23 6 13.5 15.5 8.5 10.5 1 18" /><polyline points="17 6 23 6 23 12" /></>} />,
-            Run: (p) => <IconBase {...p} path={<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />} /> // Simplified user
+        const Icon = ({ name, size = 24, className }) => {
+            const icons = {
+                run: <path d="M4 16l4-2 4 4-2 4m4-10l-4 2-4-4 2-4m-3 9l3-3m13 7l-3-3" />,
+                dumbbell: <path d="M6.5 6.5l11 11m-12.5-1l1-1m17 1l-4-4m-16 4l4-4m-3 8l7-7m7 7l7-7" />,
+                book: <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />,
+                cross: <path d="M18 6L6 18M6 6l12 12" />,
+                check: <polyline points="20 6 9 17 4 12" />,
+                scale: <path d="M12 3v18M8 21h8M4 16h16M4 8h16" />,
+                bowl: <path d="M4 16a8 8 0 0 0 16 0zM12 4v4" />,
+                water: <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />,
+                flame: <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />,
+                sun: <circle cx="12" cy="12" r="5" />,
+                body: <circle cx="12" cy="5" r="3" />,
+                history: <path d="M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" />,
+                chevronDown: <polyline points="6 9 12 15 18 9" />,
+                home: <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+            };
+            return (
+                <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                    {icons[name] || icons.run}
+                </svg>
+            );
         };
 
-        // --- Shared Components ---
-        const Card = ({ children, className = "", onClick, style }) => (
-            <div onClick={onClick} style={style} className={`bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 p-5 transition active:scale-[0.98] ${onClick ? 'cursor-pointer' : ''} ${className}`}>
+        // --- Components ---
+
+        const Tile = ({ className, children, onClick }) => (
+            <div onClick={onClick} className={`card-bg rounded-3xl p-5 relative overflow-hidden border border-white/5 transition-transform active:scale-[0.98] ${className}`}>
                 {children}
             </div>
         );
 
-        const Modal = ({ isOpen, onClose, title, children }) => {
-            if (!isOpen) return null;
+        const FoodLogOverlay = ({ mealName, onClose, onSave }) => {
+            const [description, setDescription] = useState('');
+            const [isHealthy, setIsHealthy] = useState(true);
+
             return (
-                <div className="fixed inset-0 bg-black/50 z-50 flex items-end md:items-center justify-center p-4 backdrop-blur-sm overflow-hidden" onClick={onClose}>
-                    <div className="bg-white dark:bg-slate-900 w-full md:max-w-md max-h-[85vh] flex flex-col animate-drawer md:animate-toast rounded-t-3xl md:rounded-3xl shadow-2xl" onClick={e => e.stopPropagation()}>
-                        <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center flex-shrink-0">
-                            <h3 className="font-bold text-lg dark:text-white">{title}</h3>
-                            <button onClick={onClose} className="p-1"><Icons.X className="text-slate-400" /></button>
+                <div className="fixed inset-0 z-[100] flex items-end justify-center sm:items-center">
+                    <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
+                    <div className="relative w-full max-w-lg bg-zinc-900 rounded-t-3xl sm:rounded-3xl border-t sm:border border-white/10 animate-slide-up flex flex-col overflow-hidden">
+                        <div className="p-5 border-b border-white/5 flex justify-between items-center bg-zinc-900">
+                            <h2 className="font-display font-bold text-2xl uppercase tracking-tighter">Log {mealName}</h2>
+                            <button onClick={onClose} className="p-2 bg-zinc-800 rounded-full text-zinc-400"><Icon name="cross" size={20}/></button>
                         </div>
-                        <div className="p-5 overflow-y-auto no-scrollbar">{children}</div>
+                        <div className="p-6 space-y-6">
+                            <div>
+                                <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">What did you eat?</label>
+                                <textarea 
+                                    className="w-full bg-zinc-800 rounded-xl p-4 text-white placeholder-zinc-600 outline-none focus:ring-2 focus:ring-neon-orange/50 h-32 resize-none"
+                                    placeholder="e.g. Grilled salmon, brown rice, broccoli..."
+                                    value={description}
+                                    onChange={(e) => setDescription(e.target.value)}
+                                    autoFocus
+                                />
+                            </div>
+                            
+                            <div className="flex items-center justify-between p-4 bg-zinc-800 rounded-xl">
+                                <div>
+                                    <div className="font-bold text-sm text-white">Low Cholesterol?</div>
+                                    <div className="text-[10px] text-zinc-500 uppercase">Heart Healthy Choice</div>
+                                </div>
+                                <button 
+                                    onClick={() => setIsHealthy(!isHealthy)}
+                                    className={`w-12 h-7 rounded-full transition-colors relative ${isHealthy ? 'bg-neon-lime' : 'bg-zinc-600'}`}
+                                >
+                                    <div className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full transition-transform ${isHealthy ? 'translate-x-5' : 'translate-x-0'}`} />
+                                </button>
+                            </div>
+                        </div>
+                        <div className="p-5 border-t border-white/5 bg-zinc-900">
+                            <button 
+                                onClick={() => onSave(description, isHealthy)}
+                                className="w-full py-4 rounded-2xl font-display font-bold text-xl uppercase tracking-widest bg-neon-orange text-black shadow-[0_0_20px_rgba(255,94,0,0.3)]"
+                            >
+                                Log Fuel
+                            </button>
+                        </div>
                     </div>
                 </div>
             );
         };
 
-        const EmptyState = ({ emoji, message, buttonText, onButtonClick }) => (
-            <div className="flex flex-col items-center justify-center p-10 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-3xl text-center">
-                <span className="text-4xl mb-4">{emoji}</span>
-                <p className="text-slate-500 dark:text-slate-400 mb-6 max-w-xs font-medium">{message}</p>
-                {buttonText && (
-                    <button onClick={onButtonClick} className="bg-indigo-600 text-white px-5 py-2.5 rounded-full font-bold shadow-lg shadow-indigo-500/20 active:scale-95 transition">
-                        {buttonText}
-                    </button>
-                )}
-            </div>
-        );
+        const WorkoutOverlay = ({ onClose, onComplete }) => {
+            const [activeTab, setActiveTab] = useState('strength');
+            const [checked, setChecked] = useState({});
 
-        // --- Main Application ---
-        function App() {
-            // -- State --
-            const [activeTab, setActiveTab] = useState('dashboard');
-            const [darkMode, setDarkMode] = useState(false);
-            const [toasts, setToasts] = useState([]);
-            const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
-            const [quickAddType, setQuickAddType] = useState('task');
-            
-            // Popovers
-            const [mealPopoverOpen, setMealPopoverOpen] = useState(false);
-            const [readPopoverOpen, setReadPopoverOpen] = useState(false);
-
-            // Data
-            const [user, setUser] = useState({ name: 'Jasmine', points: 0, waterGoal: 8, readGoal: 20, currentBook: 'Atomic Habits', weight: 170, goalWeight: 162 });
-            // Modified Fitness State for Athlete Persona
-            const [fitness, setFitness] = useState({ 
-                mileRun: false, 
-                strength: false, 
-                recovery: 0, 
-                workouts: [] 
-            });
-            const [nutrition, setNutrition] = useState({ water: 0, meals: [] });
-            const [mindfulness, setMindfulness] = useState({ devotional: false, readPages: 0 });
-            const [tasks, setTasks] = useState([
-                { id: 1, title: 'Clean golf clubs', energy: 'low', time: 20, complete: false, category: 'personal' }
-            ]);
-            const [groceries, setGroceries] = useState([{ id: 1, name: 'Oatmeal (Low Cholesterol)', category: 'Pantry', checked: false }]);
-            const [events, setEvents] = useState([
-                { id: 1, title: 'Morning Run', time: '07:30', date: new Date().toLocaleDateString(), category: 'fitness' }
-            ]);
-            
-            // -- Persistence & Init --
-            useEffect(() => {
-                const saved = localStorage.getItem('lifeos-jasmine-v1');
-                if (saved) {
-                    const d = JSON.parse(saved);
-                    // Reset daily habits if new day
-                    if (d.lastActiveDate !== new Date().toLocaleDateString()) {
-                        setFitness(prev => ({ ...prev, mileRun: false, strength: false, workouts: [] }));
-                        setNutrition(prev => ({ ...prev, water: 0, meals: [] }));
-                        setMindfulness(prev => ({ ...prev, devotional: false, readPages: 0 }));
-                        setTasks(prev => prev.filter(t => !t.complete)); // Clear completed tasks
-                    } else {
-                        setFitness(d.fitness || fitness);
-                        setNutrition(d.nutrition || nutrition);
-                        setMindfulness(d.mindfulness || mindfulness);
-                    }
-                    setUser(d.user || user);
-                    setTasks(d.tasks || tasks);
-                    setGroceries(d.groceries || groceries);
-                    setEvents(d.events || events);
-                    setDarkMode(d.darkMode || false);
-                }
-            }, []);
-
-            useEffect(() => {
-                const data = { user, fitness, nutrition, mindfulness, tasks, groceries, events, darkMode, lastActiveDate: new Date().toLocaleDateString() };
-                localStorage.setItem('lifeos-jasmine-v1', JSON.stringify(data));
-                if (darkMode) document.documentElement.classList.add('dark');
-                else document.documentElement.classList.remove('dark');
-            }, [user, fitness, nutrition, mindfulness, tasks, groceries, events, darkMode]);
-
-            // -- Logic --
-            const showToast = useCallback((message, type = 'success', points = 0) => {
-                const id = Date.now();
-                setToasts(prev => [...prev, { id, message, points }]);
-                setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 4000);
-                vibrate();
-                if (points > 0) setUser(prev => ({...prev, points: prev.points + points}));
-            }, []);
-
-            const calculateScore = () => {
-                // Modified Scoring for Athlete Goals
-                let score = 0;
-                if (fitness.mileRun) score += 25; // High priority
-                if (fitness.strength) score += 25; // High priority
-                if (mindfulness.devotional) score += 10;
-                if (mindfulness.readPages >= user.readGoal) score += 10;
-                if (nutrition.water >= user.waterGoal) score += 10;
-                if (nutrition.meals.length >= 3) score += 10;
-                // Cap at 100
-                return Math.min(100, score + (tasks.filter(t=>t.complete).length * 5));
+            const toggleExercise = (ex) => {
+                setChecked(prev => ({...prev, [ex]: !prev[ex]}));
             };
 
-            const toggleMileRun = () => {
-                if (fitness.mileRun) return;
-                setFitness(prev => ({...prev, mileRun: true}));
-                triggerConfetti();
-                showToast("Mile Crushed! 🏃‍♀️", "success", 25);
-            };
-
-            const toggleStrength = () => {
-                if (fitness.strength) return;
-                setFitness(prev => ({...prev, strength: true}));
-                triggerConfetti();
-                showToast("Strength Gains! 💪", "success", 25);
-            };
-
-            const logMeal = (type, healthyChoice = false) => {
-                setNutrition(prev => ({...prev, meals: [...prev.meals, { time: new Date(), type }]}));
-                showToast(healthyChoice ? "Smart Choice! 🥗" : "Meal Logged 🍽️", "success", 5);
-                setMealPopoverOpen(false);
-            };
-
-            const completeTask = (id) => {
-                setTasks(prev => prev.map(t => t.id === id ? { ...t, complete: true } : t));
-                showToast("Task Done! ✓", "success", 10);
-            };
-
-            // -- Components --
-            const ScoreRing = () => {
-                const score = calculateScore();
-                const radius = 60; const stroke = 8; const normalizedRadius = radius - stroke * 2;
-                const circumference = normalizedRadius * 2 * Math.PI;
-                const strokeDashoffset = circumference - (score / 100) * circumference;
-                
-                return (
-                    <div className="flex flex-col items-center justify-center py-6">
-                        <div className="relative w-48 h-48 flex items-center justify-center">
-                            <svg height={radius * 2.5} width={radius * 2.5} className="rotate-[-90deg]">
-                                <circle className="text-slate-200 dark:text-slate-800" stroke="currentColor" strokeWidth={stroke} r={normalizedRadius} cx={radius * 1.25} cy={radius * 1.25} fill="transparent" />
-                                <circle className="text-indigo-500 transition-all duration-1000 ease-out" stroke="currentColor" fill="transparent" strokeWidth={stroke} strokeDasharray={circumference + ' ' + circumference} style={{ strokeDashoffset, strokeLinecap: 'round' }} r={normalizedRadius} cx={radius * 1.25} cy={radius * 1.25} />
-                            </svg>
-                            <div className="absolute flex flex-col items-center animate-pop">
-                                <span className="text-6xl font-black text-indigo-600 tracking-tighter">{score}</span>
-                                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Daily Win</span>
-                            </div>
-                        </div>
-                    </div>
-                );
-            };
-
-            const SmartSuggestion = () => {
-                // ADHD logic: Only show the ONE most important next thing
-                if (!fitness.mileRun) return (
-                    <Card onClick={toggleMileRun} className="bg-gradient-to-r from-orange-500 to-red-500 text-white border-none mb-6">
-                        <div className="flex items-center gap-4">
-                            <div className="text-4xl">🏃‍♀️</div>
-                            <div><div className="font-bold text-lg">Run Your Mile</div><div className="text-white/80 text-xs uppercase font-bold tracking-wide">Priority #1 • Get it done</div></div>
-                        </div>
-                    </Card>
-                );
-                if (!fitness.strength) return (
-                    <Card onClick={toggleStrength} className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white border-none mb-6">
-                         <div className="flex items-center gap-4">
-                            <div className="text-4xl">💪</div>
-                            <div><div className="font-bold text-lg">Strength Training</div><div className="text-white/80 text-xs uppercase font-bold tracking-wide">Lean out goal</div></div>
-                        </div>
-                    </Card>
-                );
-                if (!mindfulness.devotional) return (
-                    <Card onClick={() => { setMindfulness(p => ({...p, devotional: true})); showToast("Spirit Fed 🙏", "success", 10); triggerConfetti(); }} className="bg-gradient-to-r from-purple-500 to-pink-500 text-white border-none mb-6">
-                         <div className="flex items-center gap-4">
-                            <div className="text-4xl">📖</div>
-                            <div><div className="font-bold text-lg">Daily Devotional</div><div className="text-white/80 text-xs uppercase font-bold tracking-wide">Quiet time</div></div>
-                        </div>
-                    </Card>
-                );
-                return null;
-            };
-
-            const DailyGrid = () => (
-                <div className="grid grid-cols-2 gap-3 mb-6">
-                    <button onClick={toggleMileRun} className={`p-4 rounded-2xl border-2 flex flex-col items-center justify-center transition-all ${fitness.mileRun ? 'bg-orange-50 border-orange-500 text-orange-600' : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800'}`}>
-                        <span className="text-2xl mb-1">🏃‍♀️</span>
-                        <span className="font-bold text-xs uppercase">1 Mile Run</span>
-                        {fitness.mileRun && <Icons.Check size={16} className="mt-1" />}
-                    </button>
-                    <button onClick={toggleStrength} className={`p-4 rounded-2xl border-2 flex flex-col items-center justify-center transition-all ${fitness.strength ? 'bg-blue-50 border-blue-500 text-blue-600' : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800'}`}>
-                        <span className="text-2xl mb-1">🏋️‍♀️</span>
-                        <span className="font-bold text-xs uppercase">Lift</span>
-                        {fitness.strength && <Icons.Check size={16} className="mt-1" />}
-                    </button>
-                     <button onClick={() => setMealPopoverOpen(true)} className={`p-4 rounded-2xl border-2 flex flex-col items-center justify-center transition-all ${nutrition.meals.length >= 3 ? 'bg-green-50 border-green-500 text-green-600' : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800'}`}>
-                        <span className="text-2xl mb-1">🥗</span>
-                        <span className="font-bold text-xs uppercase">Log Food</span>
-                        <span className="text-[10px] text-slate-400 mt-1">Watch Cholesterol</span>
-                    </button>
-                    <button onClick={() => setReadPopoverOpen(true)} className={`p-4 rounded-2xl border-2 flex flex-col items-center justify-center transition-all ${mindfulness.readPages >= user.readGoal ? 'bg-purple-50 border-purple-500 text-purple-600' : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800'}`}>
-                        <span className="text-2xl mb-1">📚</span>
-                        <span className="font-bold text-xs uppercase">Reading</span>
-                        <span className="text-[10px] text-slate-400 mt-1">{mindfulness.readPages}/{user.readGoal} pgs</span>
-                    </button>
-                </div>
-            );
-
-            // -- Views --
-            const Dashboard = () => (
-                <div className="space-y-6 pb-24">
-                    <SmartSuggestion />
-                    <ScoreRing />
-                    <h3 className="font-bold text-slate-400 text-xs uppercase tracking-widest px-1">Daily Habits</h3>
-                    <DailyGrid />
-                    
-                    <h3 className="font-bold text-slate-400 text-xs uppercase tracking-widest px-1">Tasks</h3>
-                    <div className="space-y-3">
-                        {tasks.filter(t => !t.complete).slice(0, 3).map(t => (
-                            <Card key={t.id} onClick={() => completeTask(t.id)} className="flex items-center justify-between group hover:border-indigo-300">
-                                <div className="flex items-center gap-3">
-                                    <div className={`w-5 h-5 rounded-full border-2 ${t.energy === 'high' ? 'border-red-400' : 'border-slate-300'}`} />
-                                    <div>
-                                        <div className="font-bold dark:text-white">{t.title}</div>
-                                        <div className="text-[10px] text-slate-400 font-bold uppercase">{t.energy} Energy • {t.time} mins</div>
-                                    </div>
-                                </div>
-                            </Card>
-                        ))}
-                         <button onClick={() => { setQuickAddType('task'); setIsQuickAddOpen(true); }} className="w-full py-3 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl text-slate-400 text-sm font-bold hover:text-indigo-500 hover:border-indigo-300 transition">+ Add Task</button>
-                    </div>
-                </div>
-            );
-
-            const ProgressView = () => (
-                <div className="space-y-6 pb-24">
-                    <h2 className="text-2xl font-bold dark:text-white">Physique & Goals</h2>
-                    
-                    {/* Weight Card */}
-                    <Card className="bg-slate-900 text-white relative overflow-hidden">
-                        <div className="relative z-10 flex justify-between items-end">
-                            <div>
-                                <div className="text-slate-400 text-xs font-bold uppercase mb-1">Current Weight</div>
-                                <div className="text-4xl font-black">{user.weight} <span className="text-lg font-medium text-slate-400">lbs</span></div>
-                            </div>
-                            <div className="text-right">
-                                <div className="text-indigo-400 text-xs font-bold uppercase mb-1">Goal</div>
-                                <div className="text-2xl font-bold">{user.goalWeight} <span className="text-sm font-medium text-slate-400">lbs</span></div>
-                            </div>
-                        </div>
-                        <div className="mt-4 h-2 bg-white/10 rounded-full overflow-hidden">
-                            {/* Simple calculation for bar width assuming start ~175, goal 162 */}
-                            <div className="h-full bg-indigo-500" style={{ width: `${Math.max(0, Math.min(100, (175 - user.weight) / (175 - user.goalWeight) * 100))}%` }}></div>
-                        </div>
-                        <div className="mt-2 text-xs text-slate-400 text-center">{user.weight - user.goalWeight} lbs to go! Lean out mode.</div>
-                    </Card>
-
-                    <h3 className="font-bold text-slate-400 text-xs uppercase tracking-widest px-1 mt-8">Recent History</h3>
-                     <div className="space-y-2">
-                         {[1,2,3].map(i => (
-                             <div key={i} className="flex justify-between items-center p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 opacity-60">
-                                 <span className="text-sm font-bold dark:text-white">Day {i} ago</span>
-                                 <span className="text-xs font-bold text-green-500">Hit Goals</span>
-                             </div>
-                         ))}
-                     </div>
-                </div>
-            );
-
-            // -- Modals & Forms --
-            const handleQuickAdd = (e) => {
-                e.preventDefault();
-                const form = e.target;
-                if (quickAddType === 'task') {
-                    setTasks([...tasks, { id: Date.now(), title: form.title.value, energy: 'medium', time: 15, complete: false, category: 'personal' }]);
-                    showToast("Task Added");
-                } else if (quickAddType === 'weight') {
-                    setUser(prev => ({...prev, weight: parseFloat(form.weight.value)}));
-                    showToast("Weight Updated", "info");
-                } else if (quickAddType === 'grocery') {
-                    setGroceries([...groceries, {id: Date.now(), name: form.item.value, category: 'Other', checked: false}]);
-                    showToast("Added to List");
-                }
-                setIsQuickAddOpen(false);
-            };
+            const totalChecks = Object.values(checked).filter(Boolean).length;
 
             return (
-                <div className={`min-h-screen ${darkMode ? 'dark bg-slate-950' : 'bg-slate-50'}`}>
-                    
-                    {/* Header */}
-                    <div className="fixed top-0 left-0 right-0 h-16 bg-white/90 dark:bg-slate-900/90 backdrop-blur z-40 flex items-center justify-between px-6 border-b border-slate-100 dark:border-slate-800">
-                        <div className="font-black text-xl tracking-tight text-slate-900 dark:text-white">Jasmine<span className="text-indigo-600">OS</span></div>
-                        <button onClick={() => setDarkMode(!darkMode)} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full"><Icons.Settings size={18} /></button>
-                    </div>
-
-                    {/* Main Content */}
-                    <div className="pt-20 px-6 max-w-md mx-auto">
-                        {activeTab === 'dashboard' && <Dashboard />}
-                        {activeTab === 'progress' && <ProgressView />}
-                        {activeTab === 'kitchen' && (
-                            <div className="pb-24">
-                                <h2 className="text-2xl font-bold mb-4 dark:text-white">Kitchen & Needs</h2>
-                                <Card className="bg-green-50 dark:bg-green-900/20 border-green-100 dark:border-green-900 mb-6">
-                                    <div className="font-bold text-green-800 dark:text-green-300 text-sm mb-1">Dietary Focus</div>
-                                    <div className="text-xs text-green-700 dark:text-green-400">Remember: Low cholesterol. Focus on oats, beans, nuts, and fatty fish. Avoid processed snacks.</div>
-                                </Card>
-                                <div className="space-y-3">
-                                    {groceries.map(g => (
-                                        <Card key={g.id} onClick={() => setGroceries(gs => gs.map(x => x.id === g.id ? {...x, checked: !x.checked} : x))} className="flex justify-between items-center py-4">
-                                            <span className={g.checked ? 'line-through text-slate-400' : 'font-medium dark:text-white'}>{g.name}</span>
-                                            <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${g.checked ? 'bg-green-500 border-green-500' : 'border-slate-200'}`}>{g.checked && <Icons.Check size={14} className="text-white" />}</div>
-                                        </Card>
-                                    ))}
-                                    <button onClick={() => { setQuickAddType('grocery'); setIsQuickAddOpen(true); }} className="w-full py-3 text-slate-400 font-bold text-sm uppercase">+ Add Item</button>
-                                </div>
+                <div className="fixed inset-0 z-[100] flex items-end justify-center sm:items-center">
+                    <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
+                    <div className="relative w-full max-w-lg h-[85vh] sm:h-auto bg-zinc-900 rounded-t-3xl sm:rounded-3xl border-t sm:border border-white/10 animate-slide-up flex flex-col overflow-hidden">
+                        <div className="p-5 border-b border-white/5 flex justify-between items-center bg-zinc-900">
+                            <div>
+                                <h2 className="font-display font-bold text-2xl uppercase tracking-tighter">Training Terminal</h2>
+                                <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Select Routines</p>
                             </div>
-                        )}
-                    </div>
-
-                    {/* Bottom Nav */}
-                    <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 pb-safe pt-2 px-6 flex justify-between items-center z-50 h-20">
-                        <button onClick={() => setActiveTab('dashboard')} className={`flex flex-col items-center gap-1 ${activeTab === 'dashboard' ? 'text-indigo-600' : 'text-slate-400'}`}><Icons.Activity /><span className="text-[10px] font-bold uppercase">Today</span></button>
-                        <button onClick={() => { setQuickAddType('task'); setIsQuickAddOpen(true); }} className="bg-indigo-600 text-white p-4 rounded-full shadow-lg shadow-indigo-500/30 -mt-8 border-4 border-slate-50 dark:border-slate-950"><Icons.Plus /></button>
-                        <button onClick={() => setActiveTab('kitchen')} className={`flex flex-col items-center gap-1 ${activeTab === 'kitchen' ? 'text-indigo-600' : 'text-slate-400'}`}><Icons.ShoppingBag /><span className="text-[10px] font-bold uppercase">Food</span></button>
-                        <button onClick={() => setActiveTab('progress')} className={`flex flex-col items-center gap-1 ${activeTab === 'progress' ? 'text-indigo-600' : 'text-slate-400'}`}><Icons.TrendingUp /><span className="text-[10px] font-bold uppercase">Stats</span></button>
-                    </div>
-
-                    {/* Quick Add Modal */}
-                    <Modal isOpen={isQuickAddOpen} onClose={() => setIsQuickAddOpen(false)} title="Quick Add">
-                        <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
-                            {['task', 'weight', 'grocery'].map(t => (
-                                <button key={t} onClick={() => setQuickAddType(t)} className={`px-4 py-2 rounded-full text-xs font-bold uppercase transition ${quickAddType === t ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-500 dark:bg-slate-800'}`}>{t}</button>
+                            <button onClick={onClose} className="p-2 bg-zinc-800 rounded-full text-zinc-400"><Icon name="cross" size={20}/></button>
+                        </div>
+                        <div className="flex p-2 gap-2 overflow-x-auto bg-zinc-900/50">
+                            {Object.entries(WORKOUTS).map(([key, data]) => (
+                                <button 
+                                    key={key} 
+                                    onClick={() => setActiveTab(key)}
+                                    className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap ${activeTab === key ? `${data.bg} text-black` : 'bg-zinc-800 text-zinc-500'}`}
+                                >
+                                    {data.label}
+                                </button>
                             ))}
                         </div>
-                        <form onSubmit={handleQuickAdd} className="space-y-4">
-                            {quickAddType === 'task' && <input name="title" placeholder="What needs doing?" className="w-full p-4 rounded-xl bg-slate-50 dark:bg-slate-800 dark:text-white outline-none" autoFocus />}
-                            {quickAddType === 'weight' && <input name="weight" type="number" step="0.1" placeholder="Current weight (lbs)" className="w-full p-4 rounded-xl bg-slate-50 dark:bg-slate-800 dark:text-white outline-none" autoFocus />}
-                            {quickAddType === 'grocery' && <input name="item" placeholder="Item name" className="w-full p-4 rounded-xl bg-slate-50 dark:bg-slate-800 dark:text-white outline-none" autoFocus />}
-                            <button className="w-full py-4 bg-indigo-600 text-white font-bold rounded-xl shadow-lg">Save</button>
-                        </form>
-                    </Modal>
-
-                    {/* Meal Popover */}
-                    {mealPopoverOpen && (
-                         <div className="fixed inset-0 bg-black/40 z-[60] flex items-end justify-center p-4" onClick={() => setMealPopoverOpen(false)}>
-                            <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-3xl p-6 animate-toast space-y-3" onClick={e => e.stopPropagation()}>
-                                <h3 className="font-bold text-center dark:text-white mb-4">Log Meal</h3>
-                                <div className="p-3 bg-yellow-50 text-yellow-800 text-xs font-bold rounded-xl text-center mb-4 border border-yellow-100">
-                                    ⚠️ Watch Cholesterol: Avoid saturated fats.
+                        <div className="flex-1 overflow-y-auto p-5 space-y-3">
+                            {WORKOUTS[activeTab].exercises.map((ex, i) => (
+                                <div 
+                                    key={i} 
+                                    onClick={() => toggleExercise(ex)}
+                                    className={`p-4 rounded-2xl border transition-all cursor-pointer flex justify-between items-center ${checked[ex] ? `bg-zinc-800 border-${WORKOUTS[activeTab].color.replace('text-', '')} border-opacity-50` : 'bg-transparent border-white/5'}`}
+                                >
+                                    <span className={`font-bold text-sm ${checked[ex] ? 'text-white' : 'text-zinc-400'}`}>{ex}</span>
+                                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${checked[ex] ? `border-transparent ${WORKOUTS[activeTab].bg} text-black` : 'border-zinc-700'}`}>
+                                        {checked[ex] && <Icon name="check" size={14} />}
+                                    </div>
                                 </div>
-                                <button onClick={() => logMeal('Breakfast', true)} className="w-full p-4 bg-green-50 text-green-700 font-bold rounded-xl border border-green-100">Healthy Breakfast (Oats/Fruit)</button>
-                                <button onClick={() => logMeal('Lunch')} className="w-full p-4 bg-slate-50 text-slate-700 font-bold rounded-xl">Lunch</button>
-                                <button onClick={() => logMeal('Dinner')} className="w-full p-4 bg-slate-50 text-slate-700 font-bold rounded-xl">Dinner</button>
-                                <button onClick={() => logMeal('Snack')} className="w-full p-4 bg-slate-50 text-slate-700 font-bold rounded-xl">Snack</button>
-                            </div>
+                            ))}
                         </div>
-                    )}
-
-                    {/* Reading Popover */}
-                     {readPopoverOpen && (
-                         <div className="fixed inset-0 bg-black/40 z-[60] flex items-end justify-center p-4" onClick={() => setReadPopoverOpen(false)}>
-                            <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-3xl p-6 animate-toast space-y-3" onClick={e => e.stopPropagation()}>
-                                <h3 className="font-bold text-center dark:text-white mb-2">Reading Log</h3>
-                                <div className="text-center text-xs text-slate-400 mb-4">{user.currentBook}</div>
-                                <div className="flex gap-3">
-                                    <button onClick={() => { setMindfulness(p => ({...p, readPages: p.readPages + 5})); showToast("+5 Pages"); }} className="flex-1 p-4 bg-slate-50 font-bold rounded-xl text-slate-600 hover:bg-indigo-50 hover:text-indigo-600">+5</button>
-                                    <button onClick={() => { setMindfulness(p => ({...p, readPages: p.readPages + 10})); showToast("+10 Pages"); }} className="flex-1 p-4 bg-slate-50 font-bold rounded-xl text-slate-600 hover:bg-indigo-50 hover:text-indigo-600">+10</button>
-                                    <button onClick={() => { setMindfulness(p => ({...p, readPages: p.readPages + 20})); showToast("+20 Pages", "success", 10); triggerConfetti(); setReadPopoverOpen(false); }} className="flex-1 p-4 bg-indigo-600 text-white font-bold rounded-xl shadow-lg shadow-indigo-200">+20</button>
-                                </div>
-                            </div>
+                        <div className="p-5 border-t border-white/5 bg-zinc-900">
+                            <button 
+                                onClick={() => onComplete(totalChecks)}
+                                className={`w-full py-4 rounded-2xl font-display font-bold text-xl uppercase tracking-widest transition-all ${totalChecks > 0 ? 'bg-neon-lime text-black shadow-[0_0_20px_rgba(204,255,0,0.3)]' : 'bg-zinc-800 text-zinc-500'}`}
+                            >
+                                {totalChecks > 0 ? `Complete Session (${totalChecks})` : 'No Exercises Selected'}
+                            </button>
                         </div>
-                    )}
-
-                    {/* Toasts */}
-                    <div className="fixed bottom-24 left-0 right-0 pointer-events-none flex flex-col items-center gap-2 z-[70]">
-                        {toasts.map(t => (
-                            <div key={t.id} className="bg-slate-900 text-white px-6 py-3 rounded-full shadow-2xl animate-toast font-bold flex items-center gap-2">
-                                {t.message} {t.points > 0 && <span className="text-green-400 text-xs">+{t.points} pts</span>}
-                            </div>
-                        ))}
                     </div>
+                </div>
+            );
+        };
 
+        const HistoryView = ({ history, onClose }) => {
+            const trendData = useMemo(() => {
+                if (!history || history.length === 0) return [];
+                // Sort by date descending
+                return [...history].sort((a,b) => new Date(b.date) - new Date(a.date)).slice(0, 7).reverse();
+            }, [history]);
+
+            return (
+                <div className="min-h-screen bg-dark-bg text-white pb-10">
+                     <header className="sticky top-0 left-0 right-0 z-50 glass px-6 py-4 flex justify-between items-center">
+                        <h1 className="font-display font-bold text-2xl tracking-tighter leading-none text-white">LOGBOOK</h1>
+                        <button onClick={onClose} className="p-2 bg-zinc-800 rounded-full text-zinc-400"><Icon name="home" size={20}/></button>
+                    </header>
+
+                    <main className="pt-6 px-4 max-w-lg mx-auto space-y-8">
+                        {/* Trend Chart */}
+                        <section>
+                            <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-widest mb-4">Weekly Trend</h2>
+                            <div className="bg-card-bg rounded-3xl p-6 border border-white/5">
+                                <div className="h-40 flex items-end justify-between gap-2">
+                                    {trendData.map((day, i) => (
+                                        <div key={i} className="flex-1 flex flex-col items-center gap-2 group">
+                                            <div className="w-full bg-zinc-800 rounded-t-sm relative h-full flex items-end overflow-hidden">
+                                                <div 
+                                                    className={`w-full transition-all duration-1000 ${day.score >= 90 ? 'bg-neon-lime' : day.score >= 70 ? 'bg-neon-cyan' : 'bg-neon-orange'}`} 
+                                                    style={{ height: `${day.score}%` }}
+                                                />
+                                            </div>
+                                            <span className="text-[10px] font-bold text-zinc-500 uppercase">{new Date(day.date).toLocaleDateString('en-US', {weekday: 'narrow'})}</span>
+                                        </div>
+                                    ))}
+                                    {trendData.length === 0 && <div className="text-zinc-500 text-sm">No history yet.</div>}
+                                </div>
+                            </div>
+                        </section>
+
+                        {/* Detailed Logs */}
+                        <section>
+                            <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-widest mb-4">Past Entries</h2>
+                            <div className="space-y-3">
+                                {[...history].sort((a,b) => new Date(b.date) - new Date(a.date)).map((entry, i) => {
+                                    const trackers = entry.trackers || {};
+                                    const meals = trackers.meals || [];
+                                    
+                                    return (
+                                        <div key={i} className="bg-card-bg rounded-3xl p-5 border border-white/5">
+                                            <div className="flex justify-between items-center mb-4">
+                                                <div>
+                                                    <div className="font-bold text-lg text-white">{new Date(entry.date).toLocaleDateString('en-US', {weekday: 'short', month: 'short', day: 'numeric'})}</div>
+                                                    <div className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">Score: {entry.score}%</div>
+                                                </div>
+                                                <div className={`text-xl font-display font-bold ${entry.score >= 80 ? 'text-neon-lime' : 'text-zinc-500'}`}>{entry.score}</div>
+                                            </div>
+                                            
+                                            {/* Snapshot */}
+                                            <div className="flex gap-2 mb-4">
+                                                {trackers.mileRun && <div className="bg-neon-lime/20 text-neon-lime px-2 py-1 rounded text-[10px] font-bold uppercase">1 Mile</div>}
+                                                {trackers.strength && <div className="bg-neon-lime/20 text-neon-lime px-2 py-1 rounded text-[10px] font-bold uppercase">Lift</div>}
+                                                {trackers.devotional && <div className="bg-white/20 text-white px-2 py-1 rounded text-[10px] font-bold uppercase">Devo</div>}
+                                            </div>
+
+                                            {/* Food Log Summary */}
+                                            <div className="space-y-1 pt-3 border-t border-white/5">
+                                                {meals.filter(m => m.done).map((m, idx) => (
+                                                    <div key={idx} className="flex justify-between text-xs text-zinc-400">
+                                                        <span className="uppercase font-bold text-zinc-600">{m.name}</span>
+                                                        <span className="truncate max-w-[150px]">{m.details || 'Logged'}</span>
+                                                    </div>
+                                                ))}
+                                                {meals.filter(m => m.done).length === 0 && <div className="text-xs text-zinc-700 italic">No food logged.</div>}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </section>
+                    </main>
+                </div>
+            )
+        };
+
+        // --- Main App ---
+
+        function App() {
+            // --- FIREBASE CONFIGURATION ---
+            // 1. Log into Firebase Console
+            // 2. Go to Project Settings
+            // 3. Scroll down to "Your apps", select "Web"
+            // 4. Copy the config object (apiKey, authDomain, etc.) and paste it below
+            
+            const firebaseConfig = {
+                // apiKey: "YOUR_API_KEY",
+                // authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+                // projectId: "YOUR_PROJECT_ID",
+                // storageBucket: "YOUR_PROJECT_ID.appspot.com",
+                // messagingSenderId: "...",
+                // appId: "..."
+            };
+
+            // ----------------------------------------------------
+            // Environment Logic (Do not modify unless you know what you are doing)
+            // ----------------------------------------------------
+            if (typeof __firebase_config !== 'undefined') {
+                try {
+                    // We are in the AI Preview Environment
+                    Object.assign(firebaseConfig, JSON.parse(__firebase_config));
+                } catch (e) {
+                    console.error("AI Env Config Error:", e);
+                }
+            } else if (!firebaseConfig.apiKey) {
+                // If the user hasn't pasted their config yet and isn't in AI Env
+                return (
+                    <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-8 text-center">
+                        <h1 className="text-2xl font-bold text-neon-orange mb-4">Configuration Missing</h1>
+                        <p className="max-w-md text-zinc-400">
+                            To run this app on your device, you need to paste your 
+                            Firebase Project Configuration into the <code>index.html</code> file 
+                            (lines 142-150).
+                        </p>
+                    </div>
+                );
+            }
+
+            const app = useMemo(() => initializeApp(firebaseConfig), []);
+            const auth = useMemo(() => getAuth(app), [app]);
+            const db = useMemo(() => getFirestore(app), [app]);
+            const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+            // State
+            const [authUser, setAuthUser] = useState(null);
+            const [view, setView] = useState('dashboard');
+            const [date, setDate] = useState(new Date());
+            
+            // App Data State
+            const [userProfile, setUserProfile] = useState(DEFAULT_USER);
+            const [trackers, setTrackers] = useState(DEFAULT_TRACKERS);
+            const [history, setHistory] = useState([]);
+            const [loading, setLoading] = useState(true);
+
+            // Modals
+            const [showWorkoutModal, setShowWorkoutModal] = useState(false);
+            const [showFoodModal, setShowFoodModal] = useState(false);
+            const [activeMealIndex, setActiveMealIndex] = useState(null);
+
+            // -- 1. Authentication --
+            useEffect(() => {
+                const initAuth = async () => {
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                };
+                initAuth();
+                return onAuthStateChanged(auth, (u) => setAuthUser(u));
+            }, [auth]);
+
+            // -- 2. Data Sync (Real-time) --
+            useEffect(() => {
+                if (!authUser) return;
+
+                // Paths
+                const userId = authUser.uid;
+                // Use standard YYYY-MM-DD for doc ID to prevent slashes breaking paths
+                const todayStr = new Date().toISOString().split('T')[0]; 
+                
+                // References
+                const profileRef = doc(db, 'artifacts', appId, 'users', userId, 'data', 'profile');
+                const todayLogRef = doc(db, 'artifacts', appId, 'users', userId, 'logs', todayStr);
+                const historyRef = collection(db, 'artifacts', appId, 'users', userId, 'logs');
+
+                // A. Sync Profile
+                const unsubProfile = onSnapshot(profileRef, (docSnap) => {
+                    if (docSnap.exists()) {
+                        setUserProfile(docSnap.data());
+                    } else {
+                        // Create default profile if it doesn't exist
+                        setDoc(profileRef, DEFAULT_USER);
+                    }
+                });
+
+                // B. Sync Today's Log
+                const unsubToday = onSnapshot(todayLogRef, (docSnap) => {
+                    if (docSnap.exists()) {
+                        setTrackers(docSnap.data().trackers);
+                    } else {
+                        // New day! Create default log
+                        setDoc(todayLogRef, {
+                            date: todayStr,
+                            trackers: DEFAULT_TRACKERS,
+                            score: 0
+                        });
+                    }
+                    setLoading(false);
+                });
+
+                // C. Sync History (Last 30 days)
+                const q = query(historyRef, orderBy('date', 'desc'), limit(30));
+                const unsubHistory = onSnapshot(q, (querySnapshot) => {
+                    const logs = [];
+                    querySnapshot.forEach((doc) => {
+                        logs.push(doc.data());
+                    });
+                    setHistory(logs);
+                });
+
+                return () => {
+                    unsubProfile();
+                    unsubToday();
+                    unsubHistory();
+                };
+            }, [authUser, db, appId]);
+
+
+            // -- 3. Score Calculation --
+            const calculateScore = useCallback((t, u) => {
+                if (!t || !u) return 0;
+                let pts = 0;
+                let total = 0;
+                
+                // Workouts
+                total += 40;
+                if (t.mileRun) pts += 20;
+                if (t.strength) pts += 20;
+                
+                // Nutrition
+                total += 30;
+                const mealScore = t.meals.filter(m => m.done).length * 5;
+                const waterScore = Math.min(10, t.water * 1.5);
+                pts += Math.min(30, mealScore + waterScore);
+                
+                // Mind
+                total += 30;
+                if (t.devotional) pts += 15;
+                if (t.pagesRead >= u.readGoal) pts += 15;
+                
+                return Math.round((pts / total) * 100);
+            }, []);
+
+            const score = useMemo(() => calculateScore(trackers, userProfile), [trackers, userProfile]);
+
+            // -- 4. Save Helpers --
+            const updateTrackers = async (newTrackers) => {
+                if (!authUser) return;
+                const userId = authUser.uid;
+                const todayStr = new Date().toISOString().split('T')[0];
+                const todayLogRef = doc(db, 'artifacts', appId, 'users', userId, 'logs', todayStr);
+                
+                const newScore = calculateScore(newTrackers, userProfile);
+                
+                // Optimistic Update
+                setTrackers(newTrackers);
+
+                // DB Update
+                await setDoc(todayLogRef, {
+                    date: todayStr,
+                    trackers: newTrackers,
+                    score: newScore
+                }, { merge: true });
+            };
+
+            const updateUser = async (newUser) => {
+                if (!authUser) return;
+                const userId = authUser.uid;
+                const profileRef = doc(db, 'artifacts', appId, 'users', userId, 'data', 'profile');
+                
+                // Optimistic Update
+                setUserProfile(newUser);
+                
+                // DB Update
+                await setDoc(profileRef, newUser, { merge: true });
+            };
+
+
+            // Handlers
+            const toggleTracker = (key) => {
+                updateTrackers({ ...trackers, [key]: !trackers[key] });
+            };
+            
+            const handleSessionComplete = (count) => {
+                if (count > 0) {
+                    updateTrackers({ ...trackers, strength: true, exercisesCompleted: count });
+                }
+                setShowWorkoutModal(false);
+            };
+
+            const openFoodLog = (idx) => {
+                setActiveMealIndex(idx);
+                setShowFoodModal(true);
+            };
+
+            const handleFoodSave = (desc, isHealthy) => {
+                const newMeals = [...trackers.meals];
+                newMeals[activeMealIndex] = {
+                    ...newMeals[activeMealIndex],
+                    done: true,
+                    details: desc,
+                    healthy: isHealthy
+                };
+                updateTrackers({ ...trackers, meals: newMeals });
+                setShowFoodModal(false);
+            };
+
+            const addWater = () => updateTrackers({ ...trackers, water: trackers.water + 1 });
+            
+            const updateWeight = (change) => {
+                const newWeight = parseFloat((userProfile.weight + change).toFixed(1));
+                updateUser({ ...userProfile, weight: newWeight });
+            };
+
+            if (loading) return <div className="min-h-screen bg-dark-bg flex items-center justify-center text-neon-lime font-display animate-pulse">LOADING JASMINE OS...</div>;
+
+            if (view === 'history') return <HistoryView history={history} onClose={() => setView('dashboard')} />;
+
+            return (
+                <div className="min-h-screen bg-dark-bg text-white pb-10 font-sans selection:bg-neon-lime selection:text-black">
+                    
+                    {/* Header */}
+                    <header className="fixed top-0 left-0 right-0 z-50 glass px-6 py-4 flex justify-between items-center">
+                        <div>
+                            <h1 className="font-display font-bold text-2xl tracking-tighter leading-none text-white">
+                                JASMINE <span className="text-neon-lime">OS</span>
+                            </h1>
+                            <p className="text-[10px] font-bold text-zinc-500 tracking-widest uppercase">
+                                {date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+                            </p>
+                        </div>
+                        <div className="flex items-center gap-4">
+                             <button onClick={() => setView('history')} className="text-zinc-500 hover:text-white transition-colors">
+                                <div className="flex flex-col items-center">
+                                    <Icon name="history" size={20} />
+                                    <span className="text-[9px] font-bold uppercase mt-0.5">Logs</span>
+                                </div>
+                             </button>
+                            
+                            <div className="w-10 h-10 rounded-full bg-zinc-800 border-2 border-zinc-700 flex items-center justify-center relative">
+                                <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
+                                    <path className="text-zinc-900" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="4" />
+                                    <path className="text-neon-lime transition-all duration-1000 ease-out" strokeDasharray={`${score}, 100`} d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="4" />
+                                </svg>
+                                <div className="absolute inset-0 flex items-center justify-center text-[10px] font-bold">{score}</div>
+                            </div>
+                        </div>
+                    </header>
+
+                    <main className="pt-24 px-4 space-y-4 max-w-lg mx-auto">
+                        
+                        {/* 1. TRAINING BLOCK (The "Need to Haves") */}
+                        <section>
+                            <div className="flex justify-between items-end mb-2 px-1">
+                                <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-widest">Training</h2>
+                                <span className="text-[10px] text-neon-lime font-bold uppercase border border-neon-lime/30 px-2 rounded-full">D1 Standards</span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                {/* Run Tile */}
+                                <Tile 
+                                    onClick={() => toggleTracker('mileRun')}
+                                    className={`h-40 flex flex-col justify-between transition-colors duration-300 ${trackers.mileRun ? 'bg-neon-lime/10 border-neon-lime/50 glow-lime' : 'bg-zinc-900'}`}
+                                >
+                                    <div className="flex justify-between items-start">
+                                        <div className={`p-2 rounded-full ${trackers.mileRun ? 'bg-neon-lime text-black' : 'bg-zinc-800 text-zinc-400'}`}>
+                                            <Icon name="run" size={20} />
+                                        </div>
+                                        {trackers.mileRun && <Icon name="check" size={20} className="text-neon-lime" />}
+                                    </div>
+                                    <div>
+                                        <div className="text-3xl font-display font-bold uppercase tracking-tighter">1 Mile</div>
+                                        <div className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Daily Cardio</div>
+                                    </div>
+                                </Tile>
+
+                                {/* Session Tile (Opens Modal) */}
+                                <Tile 
+                                    onClick={() => setShowWorkoutModal(true)}
+                                    className={`h-40 flex flex-col justify-between transition-colors duration-300 cursor-pointer ${trackers.strength ? 'bg-neon-lime/10 border-neon-lime/50 glow-lime' : 'bg-zinc-900'}`}
+                                >
+                                    <div className="flex justify-between items-start">
+                                        <div className={`p-2 rounded-full ${trackers.strength ? 'bg-neon-lime text-black' : 'bg-zinc-800 text-zinc-400'}`}>
+                                            <Icon name="dumbbell" size={20} />
+                                        </div>
+                                        {trackers.strength && <Icon name="check" size={20} className="text-neon-lime" />}
+                                    </div>
+                                    <div>
+                                        <div className="text-3xl font-display font-bold uppercase tracking-tighter">Session</div>
+                                        <div className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">
+                                            {trackers.strength ? `${trackers.exercisesCompleted} Exercises Done` : "Start Workout"}
+                                        </div>
+                                    </div>
+                                </Tile>
+                            </div>
+                        </section>
+
+                        {/* 2. PHYSIQUE (Weight Goal) */}
+                        <section>
+                            <Tile className="bg-zinc-900">
+                                <div className="flex justify-between items-center mb-4">
+                                    <div className="flex items-center gap-2">
+                                        <div className="bg-zinc-800 p-1.5 rounded-lg text-zinc-400"><Icon name="scale" size={16} /></div>
+                                        <span className="text-sm font-bold text-zinc-400 uppercase tracking-widest">Road to 162</span>
+                                    </div>
+                                    <div className="text-neon-cyan text-xs font-bold uppercase">{userProfile.goalWeight} Goal</div>
+                                </div>
+                                
+                                <div className="flex items-end justify-between mb-2">
+                                    <button onClick={(e) => { e.stopPropagation(); updateWeight(-0.1); }} className="p-3 bg-zinc-800 rounded-xl hover:bg-zinc-700 active:scale-95 text-zinc-400">-</button>
+                                    <div className="flex flex-col items-center">
+                                        <span className="text-5xl font-display font-bold text-white tracking-tighter">{userProfile.weight.toFixed(1)}</span>
+                                        <span className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Current LBS</span>
+                                    </div>
+                                    <button onClick={(e) => { e.stopPropagation(); updateWeight(0.1); }} className="p-3 bg-zinc-800 rounded-xl hover:bg-zinc-700 active:scale-95 text-white">+</button>
+                                </div>
+                                
+                                {/* Visual Gap */}
+                                <div className="w-full bg-zinc-800 h-1.5 rounded-full mt-4 overflow-hidden flex">
+                                    <div className="bg-neon-cyan h-full transition-all duration-500" style={{ width: `${Math.max(0, Math.min(100, (175 - userProfile.weight) / (175 - userProfile.goalWeight) * 100))}%` }}></div>
+                                </div>
+                                <div className="flex justify-between text-[10px] text-zinc-600 font-bold uppercase mt-1">
+                                    <span>Start (175)</span>
+                                    <span>Goal (162)</span>
+                                </div>
+                            </Tile>
+                        </section>
+
+                        {/* 3. NUTRITION (The Grid) */}
+                        <section>
+                             <div className="flex justify-between items-end mb-2 px-1">
+                                <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-widest">Fueling</h2>
+                                <div className="flex items-center gap-1 text-[10px] text-neon-orange font-bold uppercase border border-neon-orange/30 px-2 py-0.5 rounded-full">
+                                    <span>⚠️ Low Cholesterol</span>
+                                </div>
+                            </div>
+                            
+                            <Tile className="bg-zinc-900 border-none">
+                                <div className="grid grid-cols-4 gap-2">
+                                    {trackers.meals.map((meal, idx) => (
+                                        <div key={idx} onClick={() => openFoodLog(idx)} className="flex flex-col items-center gap-2 cursor-pointer group">
+                                            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border-2 transition-all duration-300 ${meal.done ? 'bg-neon-orange border-neon-orange text-black' : 'bg-transparent border-zinc-700 text-zinc-600 group-hover:border-zinc-500'}`}>
+                                                <Icon name="bowl" size={20} />
+                                            </div>
+                                            <span className={`text-[10px] font-bold uppercase tracking-wider ${meal.done ? 'text-white' : 'text-zinc-600'}`}>{meal.name}</span>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <div className="mt-6 pt-4 border-t border-white/5">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <div className="text-blue-400"><Icon name="water" size={18} /></div>
+                                            <span className="text-xs font-bold text-zinc-400 uppercase">Hydration</span>
+                                        </div>
+                                        <div className="flex gap-1">
+                                            {[...Array(8)].map((_, i) => (
+                                                <div key={i} className={`w-1.5 h-6 rounded-full ${i < trackers.water ? 'bg-blue-400' : 'bg-zinc-800'}`} />
+                                            ))}
+                                            <button onClick={addWater} className="ml-2 w-6 h-6 bg-zinc-800 rounded flex items-center justify-center text-blue-400 text-xs hover:bg-zinc-700">+</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </Tile>
+                        </section>
+
+                        {/* 4. MIND (Focus) */}
+                        <section className="grid grid-cols-1 gap-3">
+                             <div className="flex justify-between items-end px-1">
+                                <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-widest">Mental Reps</h2>
+                            </div>
+
+                            {/* Devotional Toggle */}
+                            <Tile 
+                                onClick={() => toggleTracker('devotional')}
+                                className={`flex items-center justify-between py-4 transition-colors ${trackers.devotional ? 'bg-zinc-800 border-l-4 border-l-white' : 'bg-zinc-900 border-l-4 border-l-transparent'}`}
+                            >
+                                <div className="flex items-center gap-4">
+                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${trackers.devotional ? 'bg-white text-black' : 'bg-zinc-800 text-zinc-500'}`}>
+                                        <Icon name="book" size={18} />
+                                    </div>
+                                    <div>
+                                        <div className={`font-display font-bold text-xl uppercase ${trackers.devotional ? 'text-white' : 'text-zinc-500'}`}>Devotional</div>
+                                        <div className="text-[10px] font-bold uppercase text-zinc-600">Spirit & Focus</div>
+                                    </div>
+                                </div>
+                                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${trackers.devotional ? 'bg-white border-white' : 'border-zinc-700'}`}>
+                                    {trackers.devotional && <Icon name="check" size={14} className="text-black" />}
+                                </div>
+                            </Tile>
+
+                            {/* Reading Slider */}
+                            <Tile className="bg-zinc-900">
+                                <div className="flex justify-between items-center mb-2">
+                                    <span className="text-xs font-bold uppercase text-zinc-400">{userProfile.currentBook}</span>
+                                    <span className="text-xs font-bold text-white">{trackers.pagesRead} <span className="text-zinc-500">/ {userProfile.readGoal} PGS</span></span>
+                                </div>
+                                <input 
+                                    type="range" 
+                                    min="0" 
+                                    max="50" 
+                                    value={trackers.pagesRead} 
+                                    onChange={(e) => updateTrackers({...trackers, pagesRead: parseInt(e.target.value)})} 
+                                />
+                                <div className="flex justify-between mt-4">
+                                    <button onClick={() => updateTrackers({...trackers, pagesRead: Math.max(0, trackers.pagesRead - 5)})} className="text-xs font-bold text-zinc-500 uppercase px-4 py-2 bg-zinc-800 rounded-lg">-5</button>
+                                    <button onClick={() => updateTrackers({...trackers, pagesRead: trackers.pagesRead + 5})} className="text-xs font-bold text-black uppercase px-4 py-2 bg-white rounded-lg">+5</button>
+                                </div>
+                            </Tile>
+                        </section>
+                        
+                    </main>
+
+                    {/* Modals */}
+                    {showWorkoutModal && (
+                        <WorkoutOverlay 
+                            onClose={() => setShowWorkoutModal(false)}
+                            onComplete={handleSessionComplete}
+                        />
+                    )}
+
+                    {showFoodModal && (
+                        <FoodLogOverlay 
+                            mealName={trackers.meals[activeMealIndex].name}
+                            onClose={() => setShowFoodModal(false)}
+                            onSave={handleFoodSave}
+                        />
+                    )}
                 </div>
             );
         }
