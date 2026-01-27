@@ -3,8 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <!-- PWA Settings -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="JasmineOS">
+    
+    <!-- App Icon (Data URI to ensure it works without external hosting) -->
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%2309090b'/%3E%3Ctext x='50' y='65' font-family='sans-serif' font-weight='900' font-size='60' text-anchor='middle' fill='%23ccff00'%3EJ%3C/text%3E%3C/svg%3E">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%2309090b'/%3E%3Ctext x='50' y='65' font-family='sans-serif' font-weight='900' font-size='60' text-anchor='middle' fill='%23ccff00'%3EJ%3C/text%3E%3C/svg%3E">
+
     <title>Jasmine TRAIN_OS</title>
     
     <!-- Tailwind CSS -->
@@ -21,7 +29,6 @@
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, onSnapshot, collection, query, limit, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Expose Firebase functions to the global window object for Babel script to access
         window.FirebaseLib = {
             initializeApp,
             getAuth,
@@ -37,6 +44,7 @@
             limit,
             orderBy
         };
+        window.isFirebaseLoaded = true;
     </script>
     
     <!-- Fonts -->
@@ -86,19 +94,13 @@
         .glass-solid { background: rgba(24, 24, 27, 0.95); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
         .glow-lime { box-shadow: 0 0 20px rgba(204, 255, 0, 0.15); }
         .glow-cyan { box-shadow: 0 0 20px rgba(0, 240, 255, 0.15); }
-        
-        /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 0px; background: transparent; }
+        input[type="range"] { -webkit-appearance: none; width: 100%; background: transparent; }
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; height: 20px; width: 20px; border-radius: 50%; background: #ffffff; cursor: pointer; margin-top: -8px; box-shadow: 0 0 10px rgba(255,255,255,0.5); }
+        input[type="range"]::-webkit-slider-runnable-track { width: 100%; height: 4px; cursor: pointer; background: #3f3f46; border-radius: 2px; }
         
-        input[type="range"] {
-            -webkit-appearance: none; width: 100%; background: transparent;
-        }
-        input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none; height: 20px; width: 20px; border-radius: 50%; background: #ffffff; cursor: pointer; margin-top: -8px; box-shadow: 0 0 10px rgba(255,255,255,0.5);
-        }
-        input[type="range"]::-webkit-slider-runnable-track {
-            width: 100%; height: 4px; cursor: pointer; background: #3f3f46; border-radius: 2px;
-        }
+        /* Safe area padding for iPhones with notches */
+        .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
     </style>
 </head>
 <body>
@@ -106,9 +108,6 @@
 
     <script type="text/babel">
         const { useState, useEffect, useMemo, useCallback } = React;
-        
-        // Wait for FirebaseLib to be available
-        const { initializeApp, getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken, getFirestore, doc, setDoc, onSnapshot, collection, query, limit, orderBy } = window.FirebaseLib;
 
         // --- Data Constants ---
         const WORKOUTS = {
@@ -137,7 +136,8 @@
             weight: 170.2, 
             goalWeight: 162.0, 
             readGoal: 20,
-            currentBook: "The Mental Game"
+            currentBook: "The Mental Game",
+            customExercises: { strength: [], pilates: [], yoga: [], stretch: [] }
         };
 
         // --- Icons ---
@@ -156,8 +156,20 @@
                 body: <circle cx="12" cy="5" r="3" />,
                 history: <path d="M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" />,
                 chevronDown: <polyline points="6 9 12 15 18 9" />,
-                home: <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                home: <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />,
+                share: <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />,
+                shareArrow: <polyline points="16 6 12 2 8 6" />,
+                plus: <path d="M12 5v14M5 12h14" />
             };
+            if(name === 'shareIos') {
+                return (
+                    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                        <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                        <polyline points="16 6 12 2 8 6" />
+                        <line x1="12" y1="2" x2="12" y2="15" />
+                    </svg>
+                )
+            }
             return (
                 <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
                     {icons[name] || icons.run}
@@ -166,17 +178,34 @@
         };
 
         // --- Components ---
-
         const Tile = ({ className, children, onClick }) => (
             <div onClick={onClick} className={`card-bg rounded-3xl p-5 relative overflow-hidden border border-white/5 transition-transform active:scale-[0.98] ${className}`}>
                 {children}
             </div>
         );
 
+        const InstallPrompt = () => {
+            const [show, setShow] = useState(false);
+            useEffect(() => {
+                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+                const isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
+                if (isIOS && !isStandalone) setShow(true);
+            }, []);
+            if (!show) return null;
+            return (
+                <div className="fixed bottom-6 left-4 right-4 z-[60] bg-zinc-900/95 backdrop-blur-xl border border-neon-lime/20 p-4 rounded-2xl shadow-2xl flex items-center justify-between animate-slide-up">
+                    <div className="text-sm">
+                        <p className="font-bold text-white mb-1 text-neon-lime">Install JasmineOS</p>
+                        <p className="text-zinc-400 text-xs">Tap <Icon name="shareIos" size={12} className="inline mx-1" /> then "Add to Home Screen"</p>
+                    </div>
+                    <button onClick={() => setShow(false)} className="text-zinc-500 p-2"><Icon name="cross" size={16}/></button>
+                </div>
+            );
+        };
+
         const FoodLogOverlay = ({ mealName, onClose, onSave }) => {
             const [description, setDescription] = useState('');
             const [isHealthy, setIsHealthy] = useState(true);
-
             return (
                 <div className="fixed inset-0 z-[100] flex items-end justify-center sm:items-center">
                     <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
@@ -188,94 +217,74 @@
                         <div className="p-6 space-y-6">
                             <div>
                                 <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">What did you eat?</label>
-                                <textarea 
-                                    className="w-full bg-zinc-800 rounded-xl p-4 text-white placeholder-zinc-600 outline-none focus:ring-2 focus:ring-neon-orange/50 h-32 resize-none"
-                                    placeholder="e.g. Grilled salmon, brown rice, broccoli..."
-                                    value={description}
-                                    onChange={(e) => setDescription(e.target.value)}
-                                    autoFocus
-                                />
+                                <textarea className="w-full bg-zinc-800 rounded-xl p-4 text-white placeholder-zinc-600 outline-none focus:ring-2 focus:ring-neon-orange/50 h-32 resize-none" placeholder="e.g. Grilled salmon, brown rice, broccoli..." value={description} onChange={(e) => setDescription(e.target.value)} autoFocus />
                             </div>
-                            
                             <div className="flex items-center justify-between p-4 bg-zinc-800 rounded-xl">
-                                <div>
-                                    <div className="font-bold text-sm text-white">Low Cholesterol?</div>
-                                    <div className="text-[10px] text-zinc-500 uppercase">Heart Healthy Choice</div>
-                                </div>
-                                <button 
-                                    onClick={() => setIsHealthy(!isHealthy)}
-                                    className={`w-12 h-7 rounded-full transition-colors relative ${isHealthy ? 'bg-neon-lime' : 'bg-zinc-600'}`}
-                                >
-                                    <div className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full transition-transform ${isHealthy ? 'translate-x-5' : 'translate-x-0'}`} />
-                                </button>
+                                <div><div className="font-bold text-sm text-white">Low Cholesterol?</div><div className="text-[10px] text-zinc-500 uppercase">Heart Healthy Choice</div></div>
+                                <button onClick={() => setIsHealthy(!isHealthy)} className={`w-12 h-7 rounded-full transition-colors relative ${isHealthy ? 'bg-neon-lime' : 'bg-zinc-600'}`}><div className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full transition-transform ${isHealthy ? 'translate-x-5' : 'translate-x-0'}`} /></button>
                             </div>
                         </div>
                         <div className="p-5 border-t border-white/5 bg-zinc-900">
-                            <button 
-                                onClick={() => onSave(description, isHealthy)}
-                                className="w-full py-4 rounded-2xl font-display font-bold text-xl uppercase tracking-widest bg-neon-orange text-black shadow-[0_0_20px_rgba(255,94,0,0.3)]"
-                            >
-                                Log Fuel
-                            </button>
+                            <button onClick={() => onSave(description, isHealthy)} className="w-full py-4 rounded-2xl font-display font-bold text-xl uppercase tracking-widest bg-neon-orange text-black shadow-[0_0_20px_rgba(255,94,0,0.3)]">Log Fuel</button>
                         </div>
                     </div>
                 </div>
             );
         };
 
-        const WorkoutOverlay = ({ onClose, onComplete }) => {
+        const WorkoutOverlay = ({ onClose, onComplete, customExercises = {}, onAddExercise }) => {
             const [activeTab, setActiveTab] = useState('strength');
             const [checked, setChecked] = useState({});
+            const [newExercise, setNewExercise] = useState('');
 
-            const toggleExercise = (ex) => {
-                setChecked(prev => ({...prev, [ex]: !prev[ex]}));
-            };
-
+            const toggleExercise = (ex) => setChecked(prev => ({...prev, [ex]: !prev[ex]}));
             const totalChecks = Object.values(checked).filter(Boolean).length;
+
+            const exercises = [
+                ...WORKOUTS[activeTab].exercises,
+                ...(customExercises[activeTab] || [])
+            ];
+
+            const handleAdd = () => {
+                if (!newExercise.trim()) return;
+                onAddExercise(activeTab, newExercise.trim());
+                setNewExercise('');
+            };
 
             return (
                 <div className="fixed inset-0 z-[100] flex items-end justify-center sm:items-center">
                     <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
                     <div className="relative w-full max-w-lg h-[85vh] sm:h-auto bg-zinc-900 rounded-t-3xl sm:rounded-3xl border-t sm:border border-white/10 animate-slide-up flex flex-col overflow-hidden">
                         <div className="p-5 border-b border-white/5 flex justify-between items-center bg-zinc-900">
-                            <div>
-                                <h2 className="font-display font-bold text-2xl uppercase tracking-tighter">Training Terminal</h2>
-                                <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Select Routines</p>
-                            </div>
+                            <div><h2 className="font-display font-bold text-2xl uppercase tracking-tighter">Training Terminal</h2><p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Select Routines</p></div>
                             <button onClick={onClose} className="p-2 bg-zinc-800 rounded-full text-zinc-400"><Icon name="cross" size={20}/></button>
                         </div>
                         <div className="flex p-2 gap-2 overflow-x-auto bg-zinc-900/50">
-                            {Object.entries(WORKOUTS).map(([key, data]) => (
-                                <button 
-                                    key={key} 
-                                    onClick={() => setActiveTab(key)}
-                                    className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap ${activeTab === key ? `${data.bg} text-black` : 'bg-zinc-800 text-zinc-500'}`}
-                                >
-                                    {data.label}
-                                </button>
-                            ))}
+                            {Object.entries(WORKOUTS).map(([key, data]) => (<button key={key} onClick={() => setActiveTab(key)} className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap ${activeTab === key ? `${data.bg} text-black` : 'bg-zinc-800 text-zinc-500'}`}>{data.label}</button>))}
                         </div>
                         <div className="flex-1 overflow-y-auto p-5 space-y-3">
-                            {WORKOUTS[activeTab].exercises.map((ex, i) => (
-                                <div 
-                                    key={i} 
-                                    onClick={() => toggleExercise(ex)}
-                                    className={`p-4 rounded-2xl border transition-all cursor-pointer flex justify-between items-center ${checked[ex] ? `bg-zinc-800 border-${WORKOUTS[activeTab].color.replace('text-', '')} border-opacity-50` : 'bg-transparent border-white/5'}`}
-                                >
+                            {exercises.map((ex, i) => (
+                                <div key={i} onClick={() => toggleExercise(ex)} className={`p-4 rounded-2xl border transition-all cursor-pointer flex justify-between items-center ${checked[ex] ? `bg-zinc-800 border-${WORKOUTS[activeTab].color.replace('text-', '')} border-opacity-50` : 'bg-transparent border-white/5'}`}>
                                     <span className={`font-bold text-sm ${checked[ex] ? 'text-white' : 'text-zinc-400'}`}>{ex}</span>
-                                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${checked[ex] ? `border-transparent ${WORKOUTS[activeTab].bg} text-black` : 'border-zinc-700'}`}>
-                                        {checked[ex] && <Icon name="check" size={14} />}
-                                    </div>
+                                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${checked[ex] ? `border-transparent ${WORKOUTS[activeTab].bg} text-black` : 'border-zinc-700'}`}>{checked[ex] && <Icon name="check" size={14} />}</div>
                                 </div>
                             ))}
+                            {/* Add New Input */}
+                            <div className="pt-2 border-t border-white/5 mt-4">
+                                <div className="flex gap-2">
+                                    <input 
+                                        className="bg-zinc-800 rounded-xl px-4 py-3 w-full text-sm outline-none text-white placeholder-zinc-500 focus:ring-1 focus:ring-white" 
+                                        placeholder={`Add new ${WORKOUTS[activeTab].label} move...`}
+                                        value={newExercise} 
+                                        onChange={e => setNewExercise(e.target.value)}
+                                        onKeyDown={e => e.key === 'Enter' && handleAdd()}
+                                    />
+                                    <button onClick={handleAdd} className="bg-zinc-700 p-3 rounded-xl hover:bg-zinc-600 transition-colors"><Icon name="plus" size={20} className="text-white" /></button>
+                                </div>
+                            </div>
                         </div>
                         <div className="p-5 border-t border-white/5 bg-zinc-900">
-                            <button 
-                                onClick={() => onComplete(totalChecks)}
-                                className={`w-full py-4 rounded-2xl font-display font-bold text-xl uppercase tracking-widest transition-all ${totalChecks > 0 ? 'bg-neon-lime text-black shadow-[0_0_20px_rgba(204,255,0,0.3)]' : 'bg-zinc-800 text-zinc-500'}`}
-                            >
-                                {totalChecks > 0 ? `Complete Session (${totalChecks})` : 'No Exercises Selected'}
-                            </button>
+                            <button onClick={() => onComplete(totalChecks)} className={`w-full py-4 rounded-2xl font-display font-bold text-xl uppercase tracking-widest transition-all ${totalChecks > 0 ? 'bg-neon-lime text-black shadow-[0_0_20px_rgba(204,255,0,0.3)]' : 'bg-zinc-800 text-zinc-500'}`}>{totalChecks > 0 ? `Complete Session (${totalChecks})` : 'No Exercises Selected'}</button>
                         </div>
                     </div>
                 </div>
@@ -285,7 +294,6 @@
         const HistoryView = ({ history, onClose }) => {
             const trendData = useMemo(() => {
                 if (!history || history.length === 0) return [];
-                // Sort by date descending
                 return [...history].sort((a,b) => new Date(b.date) - new Date(a.date)).slice(0, 7).reverse();
             }, [history]);
 
@@ -295,9 +303,7 @@
                         <h1 className="font-display font-bold text-2xl tracking-tighter leading-none text-white">LOGBOOK</h1>
                         <button onClick={onClose} className="p-2 bg-zinc-800 rounded-full text-zinc-400"><Icon name="home" size={20}/></button>
                     </header>
-
                     <main className="pt-6 px-4 max-w-lg mx-auto space-y-8">
-                        {/* Trend Chart */}
                         <section>
                             <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-widest mb-4">Weekly Trend</h2>
                             <div className="bg-card-bg rounded-3xl p-6 border border-white/5">
@@ -305,10 +311,7 @@
                                     {trendData.map((day, i) => (
                                         <div key={i} className="flex-1 flex flex-col items-center gap-2 group">
                                             <div className="w-full bg-zinc-800 rounded-t-sm relative h-full flex items-end overflow-hidden">
-                                                <div 
-                                                    className={`w-full transition-all duration-1000 ${day.score >= 90 ? 'bg-neon-lime' : day.score >= 70 ? 'bg-neon-cyan' : 'bg-neon-orange'}`} 
-                                                    style={{ height: `${day.score}%` }}
-                                                />
+                                                <div className={`w-full transition-all duration-1000 ${day.score >= 90 ? 'bg-neon-lime' : day.score >= 70 ? 'bg-neon-cyan' : 'bg-neon-orange'}`} style={{ height: `${day.score}%` }} />
                                             </div>
                                             <span className="text-[10px] font-bold text-zinc-500 uppercase">{new Date(day.date).toLocaleDateString('en-US', {weekday: 'narrow'})}</span>
                                         </div>
@@ -317,15 +320,12 @@
                                 </div>
                             </div>
                         </section>
-
-                        {/* Detailed Logs */}
                         <section>
                             <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-widest mb-4">Past Entries</h2>
                             <div className="space-y-3">
                                 {[...history].sort((a,b) => new Date(b.date) - new Date(a.date)).map((entry, i) => {
                                     const trackers = entry.trackers || {};
                                     const meals = trackers.meals || [];
-                                    
                                     return (
                                         <div key={i} className="bg-card-bg rounded-3xl p-5 border border-white/5">
                                             <div className="flex justify-between items-center mb-4">
@@ -335,15 +335,11 @@
                                                 </div>
                                                 <div className={`text-xl font-display font-bold ${entry.score >= 80 ? 'text-neon-lime' : 'text-zinc-500'}`}>{entry.score}</div>
                                             </div>
-                                            
-                                            {/* Snapshot */}
                                             <div className="flex gap-2 mb-4">
                                                 {trackers.mileRun && <div className="bg-neon-lime/20 text-neon-lime px-2 py-1 rounded text-[10px] font-bold uppercase">1 Mile</div>}
                                                 {trackers.strength && <div className="bg-neon-lime/20 text-neon-lime px-2 py-1 rounded text-[10px] font-bold uppercase">Lift</div>}
                                                 {trackers.devotional && <div className="bg-white/20 text-white px-2 py-1 rounded text-[10px] font-bold uppercase">Devo</div>}
                                             </div>
-
-                                            {/* Food Log Summary */}
                                             <div className="space-y-1 pt-3 border-t border-white/5">
                                                 {meals.filter(m => m.done).map((m, idx) => (
                                                     <div key={idx} className="flex justify-between text-xs text-zinc-400">
@@ -364,14 +360,7 @@
         };
 
         // --- Main App ---
-
         function App() {
-            // --- FIREBASE CONFIGURATION ---
-            // 1. Log into Firebase Console
-            // 2. Go to Project Settings
-            // 3. Scroll down to "Your apps", select "Web"
-            // 4. Copy the config object (apiKey, authDomain, etc.) and paste it below
-            
             const firebaseConfig = {
                 apiKey: "AIzaSyCb5KsO4HYmYcYE34hRDpfctjsFrahEheE",
                 authDomain: "jasmine-workout-app.firebaseapp.com",
@@ -381,430 +370,187 @@
                 appId: "1:123351449647:web:63d76d64052893838546da"
             };
 
-            // ----------------------------------------------------
-            // Environment Logic (Do not modify unless you know what you are doing)
-            // ----------------------------------------------------
-            if (typeof __firebase_config !== 'undefined') {
-                try {
-                    // We are in the AI Preview Environment
-                    Object.assign(firebaseConfig, JSON.parse(__firebase_config));
-                } catch (e) {
-                    console.error("AI Env Config Error:", e);
-                }
-            } else if (!firebaseConfig.apiKey) {
-                // If the user hasn't pasted their config yet and isn't in AI Env
-                return (
-                    <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-8 text-center">
-                        <h1 className="text-2xl font-bold text-neon-orange mb-4">Configuration Missing</h1>
-                        <p className="max-w-md text-zinc-400">
-                            To run this app on your device, you need to paste your 
-                            Firebase Project Configuration into the <code>index.html</code> file 
-                            (lines 142-150).
-                        </p>
-                    </div>
-                );
-            }
-
-            const app = useMemo(() => initializeApp(firebaseConfig), []);
-            const auth = useMemo(() => getAuth(app), [app]);
-            const db = useMemo(() => getFirestore(app), [app]);
-            const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-
-            // State
+            const [libs, setLibs] = useState(null);
             const [authUser, setAuthUser] = useState(null);
             const [view, setView] = useState('dashboard');
             const [date, setDate] = useState(new Date());
-            
-            // App Data State
             const [userProfile, setUserProfile] = useState(DEFAULT_USER);
             const [trackers, setTrackers] = useState(DEFAULT_TRACKERS);
             const [history, setHistory] = useState([]);
             const [loading, setLoading] = useState(true);
-
-            // Modals
+            const [errorMsg, setErrorMsg] = useState(null);
             const [showWorkoutModal, setShowWorkoutModal] = useState(false);
             const [showFoodModal, setShowFoodModal] = useState(false);
             const [activeMealIndex, setActiveMealIndex] = useState(null);
 
-            // -- 1. Authentication --
+            // Wait for Firebase Scripts to Load
             useEffect(() => {
-                const initAuth = async () => {
-                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                        await signInWithCustomToken(auth, __initial_auth_token);
-                    } else {
-                        await signInAnonymously(auth);
+                const checkLibs = setInterval(() => {
+                    if (window.FirebaseLib) {
+                        setLibs(window.FirebaseLib);
+                        clearInterval(checkLibs);
+                    }
+                }, 100);
+                return () => clearInterval(checkLibs);
+            }, []);
+
+            // Initialize App once libs are ready
+            const { app, auth, db, appId } = useMemo(() => {
+                if (!libs) return {};
+                const app = libs.initializeApp(firebaseConfig);
+                const auth = libs.getAuth(app);
+                const db = libs.getFirestore(app);
+                const appId = "default-app-id";
+                return { app, auth, db, appId };
+            }, [libs]);
+
+            // Authentication
+            useEffect(() => {
+                if (!auth || !libs) return;
+                
+                const performAuth = async () => {
+                    try {
+                        await libs.signInAnonymously(auth);
+                    } catch (err) {
+                        console.error("Auth Error", err);
+                        setErrorMsg(`Authentication Error: ${err.message}. Ensure 'Anonymous' is enabled in Firebase Console.`);
                     }
                 };
-                initAuth();
-                return onAuthStateChanged(auth, (u) => setAuthUser(u));
-            }, [auth]);
+                performAuth();
 
-            // -- 2. Data Sync (Real-time) --
+                return libs.onAuthStateChanged(auth, (u) => {
+                    if (u) setAuthUser(u);
+                });
+            }, [auth, libs]);
+
+            // Data Sync
             useEffect(() => {
-                if (!authUser) return;
+                if (!authUser || !db || !libs) return;
 
-                // Paths
                 const userId = authUser.uid;
-                // Use standard YYYY-MM-DD for doc ID to prevent slashes breaking paths
-                const todayStr = new Date().toISOString().split('T')[0]; 
-                
-                // References
-                const profileRef = doc(db, 'artifacts', appId, 'users', userId, 'data', 'profile');
-                const todayLogRef = doc(db, 'artifacts', appId, 'users', userId, 'logs', todayStr);
-                const historyRef = collection(db, 'artifacts', appId, 'users', userId, 'logs');
+                const todayStr = new Date().toISOString().split('T')[0];
+                const profileRef = libs.doc(db, 'artifacts', appId, 'users', userId, 'data', 'profile');
+                const todayLogRef = libs.doc(db, 'artifacts', appId, 'users', userId, 'logs', todayStr);
+                const historyRef = libs.collection(db, 'artifacts', appId, 'users', userId, 'logs');
 
-                // A. Sync Profile
-                const unsubProfile = onSnapshot(profileRef, (docSnap) => {
-                    if (docSnap.exists()) {
-                        setUserProfile(docSnap.data());
-                    } else {
-                        // Create default profile if it doesn't exist
-                        setDoc(profileRef, DEFAULT_USER);
-                    }
+                const unsubProfile = libs.onSnapshot(profileRef, (docSnap) => {
+                    if (docSnap.exists()) setUserProfile(docSnap.data());
+                    else libs.setDoc(profileRef, DEFAULT_USER);
                 });
 
-                // B. Sync Today's Log
-                const unsubToday = onSnapshot(todayLogRef, (docSnap) => {
-                    if (docSnap.exists()) {
-                        setTrackers(docSnap.data().trackers);
-                    } else {
-                        // New day! Create default log
-                        setDoc(todayLogRef, {
-                            date: todayStr,
-                            trackers: DEFAULT_TRACKERS,
-                            score: 0
-                        });
-                    }
+                const unsubToday = libs.onSnapshot(todayLogRef, (docSnap) => {
+                    if (docSnap.exists()) setTrackers(docSnap.data().trackers);
+                    else libs.setDoc(todayLogRef, { date: todayStr, trackers: DEFAULT_TRACKERS, score: 0 });
                     setLoading(false);
+                }, (err) => {
+                    console.error("Firestore Error", err);
+                    setErrorMsg(`Database Error: ${err.message}. Check your Security Rules.`);
                 });
 
-                // C. Sync History (Last 30 days)
-                const q = query(historyRef, orderBy('date', 'desc'), limit(30));
-                const unsubHistory = onSnapshot(q, (querySnapshot) => {
+                const q = libs.query(historyRef, libs.orderBy('date', 'desc'), libs.limit(30));
+                const unsubHistory = libs.onSnapshot(q, (qs) => {
                     const logs = [];
-                    querySnapshot.forEach((doc) => {
-                        logs.push(doc.data());
-                    });
+                    qs.forEach(d => logs.push(d.data()));
                     setHistory(logs);
                 });
 
-                return () => {
-                    unsubProfile();
-                    unsubToday();
-                    unsubHistory();
-                };
-            }, [authUser, db, appId]);
+                return () => { unsubProfile(); unsubToday(); unsubHistory(); };
+            }, [authUser, db, libs]);
 
-
-            // -- 3. Score Calculation --
             const calculateScore = useCallback((t, u) => {
                 if (!t || !u) return 0;
-                let pts = 0;
-                let total = 0;
-                
-                // Workouts
-                total += 40;
+                let pts = 0, total = 100;
                 if (t.mileRun) pts += 20;
                 if (t.strength) pts += 20;
-                
-                // Nutrition
-                total += 30;
                 const mealScore = t.meals.filter(m => m.done).length * 5;
                 const waterScore = Math.min(10, t.water * 1.5);
                 pts += Math.min(30, mealScore + waterScore);
-                
-                // Mind
-                total += 30;
                 if (t.devotional) pts += 15;
                 if (t.pagesRead >= u.readGoal) pts += 15;
-                
-                return Math.round((pts / total) * 100);
+                return Math.round((pts / total) * 100); // Approximate
             }, []);
 
             const score = useMemo(() => calculateScore(trackers, userProfile), [trackers, userProfile]);
 
-            // -- 4. Save Helpers --
             const updateTrackers = async (newTrackers) => {
-                if (!authUser) return;
-                const userId = authUser.uid;
+                if (!authUser || !libs) return;
                 const todayStr = new Date().toISOString().split('T')[0];
-                const todayLogRef = doc(db, 'artifacts', appId, 'users', userId, 'logs', todayStr);
-                
-                const newScore = calculateScore(newTrackers, userProfile);
-                
-                // Optimistic Update
+                const todayLogRef = libs.doc(db, 'artifacts', appId, 'users', authUser.uid, 'logs', todayStr);
                 setTrackers(newTrackers);
-
-                // DB Update
-                await setDoc(todayLogRef, {
-                    date: todayStr,
-                    trackers: newTrackers,
-                    score: newScore
-                }, { merge: true });
+                await libs.setDoc(todayLogRef, { date: todayStr, trackers: newTrackers, score: calculateScore(newTrackers, userProfile) }, { merge: true });
             };
 
             const updateUser = async (newUser) => {
-                if (!authUser) return;
-                const userId = authUser.uid;
-                const profileRef = doc(db, 'artifacts', appId, 'users', userId, 'data', 'profile');
-                
-                // Optimistic Update
+                if (!authUser || !libs) return;
+                const profileRef = libs.doc(db, 'artifacts', appId, 'users', authUser.uid, 'data', 'profile');
                 setUserProfile(newUser);
-                
-                // DB Update
-                await setDoc(profileRef, newUser, { merge: true });
+                await libs.setDoc(profileRef, newUser, { merge: true });
             };
 
-
-            // Handlers
-            const toggleTracker = (key) => {
-                updateTrackers({ ...trackers, [key]: !trackers[key] });
-            };
-            
+            const toggleTracker = (key) => updateTrackers({ ...trackers, [key]: !trackers[key] });
             const handleSessionComplete = (count) => {
-                if (count > 0) {
-                    updateTrackers({ ...trackers, strength: true, exercisesCompleted: count });
-                }
+                if (count > 0) updateTrackers({ ...trackers, strength: true, exercisesCompleted: count });
                 setShowWorkoutModal(false);
             };
-
-            const openFoodLog = (idx) => {
-                setActiveMealIndex(idx);
-                setShowFoodModal(true);
-            };
-
+            const openFoodLog = (idx) => { setActiveMealIndex(idx); setShowFoodModal(true); };
             const handleFoodSave = (desc, isHealthy) => {
                 const newMeals = [...trackers.meals];
-                newMeals[activeMealIndex] = {
-                    ...newMeals[activeMealIndex],
-                    done: true,
-                    details: desc,
-                    healthy: isHealthy
-                };
+                newMeals[activeMealIndex] = { ...newMeals[activeMealIndex], done: true, details: desc, healthy: isHealthy };
                 updateTrackers({ ...trackers, meals: newMeals });
                 setShowFoodModal(false);
             };
-
             const addWater = () => updateTrackers({ ...trackers, water: trackers.water + 1 });
-            
             const updateWeight = (change) => {
                 const newWeight = parseFloat((userProfile.weight + change).toFixed(1));
                 updateUser({ ...userProfile, weight: newWeight });
             };
+            const handleAddExercise = (category, exercise) => {
+                const currentCustom = userProfile.customExercises || {};
+                const categoryExercises = currentCustom[category] || [];
+                const updatedCustom = {
+                    ...currentCustom,
+                    [category]: [...categoryExercises, exercise]
+                };
+                updateUser({ ...userProfile, customExercises: updatedCustom });
+            };
 
+            if (errorMsg) return <div className="min-h-screen bg-dark-bg flex flex-col items-center justify-center p-8 text-center"><div className="text-red-500 font-bold text-xl mb-2">ERROR</div><p className="text-white text-sm">{errorMsg}</p></div>;
             if (loading) return <div className="min-h-screen bg-dark-bg flex items-center justify-center text-neon-lime font-display animate-pulse">LOADING JASMINE OS...</div>;
-
             if (view === 'history') return <HistoryView history={history} onClose={() => setView('dashboard')} />;
 
             return (
                 <div className="min-h-screen bg-dark-bg text-white pb-10 font-sans selection:bg-neon-lime selection:text-black">
-                    
-                    {/* Header */}
                     <header className="fixed top-0 left-0 right-0 z-50 glass px-6 py-4 flex justify-between items-center">
-                        <div>
-                            <h1 className="font-display font-bold text-2xl tracking-tighter leading-none text-white">
-                                JASMINE <span className="text-neon-lime">OS</span>
-                            </h1>
-                            <p className="text-[10px] font-bold text-zinc-500 tracking-widest uppercase">
-                                {date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
-                            </p>
-                        </div>
-                        <div className="flex items-center gap-4">
-                             <button onClick={() => setView('history')} className="text-zinc-500 hover:text-white transition-colors">
-                                <div className="flex flex-col items-center">
-                                    <Icon name="history" size={20} />
-                                    <span className="text-[9px] font-bold uppercase mt-0.5">Logs</span>
-                                </div>
-                             </button>
-                            
-                            <div className="w-10 h-10 rounded-full bg-zinc-800 border-2 border-zinc-700 flex items-center justify-center relative">
-                                <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
-                                    <path className="text-zinc-900" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="4" />
-                                    <path className="text-neon-lime transition-all duration-1000 ease-out" strokeDasharray={`${score}, 100`} d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="4" />
-                                </svg>
-                                <div className="absolute inset-0 flex items-center justify-center text-[10px] font-bold">{score}</div>
-                            </div>
-                        </div>
+                        <div><h1 className="font-display font-bold text-2xl tracking-tighter leading-none text-white">JASMINE <span className="text-neon-lime">OS</span></h1><p className="text-[10px] font-bold text-zinc-500 tracking-widest uppercase">{date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}</p></div>
+                        <div className="flex items-center gap-4"><button onClick={() => setView('history')} className="text-zinc-500 hover:text-white transition-colors"><div className="flex flex-col items-center"><Icon name="history" size={20} /><span className="text-[9px] font-bold uppercase mt-0.5">Logs</span></div></button><div className="w-10 h-10 rounded-full bg-zinc-800 border-2 border-zinc-700 flex items-center justify-center relative"><svg className="w-full h-full -rotate-90" viewBox="0 0 36 36"><path className="text-zinc-900" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="4" /><path className="text-neon-lime transition-all duration-1000 ease-out" strokeDasharray={`${score}, 100`} d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="4" /></svg><div className="absolute inset-0 flex items-center justify-center text-[10px] font-bold">{score}</div></div></div>
                     </header>
-
-                    <main className="pt-24 px-4 space-y-4 max-w-lg mx-auto">
-                        
-                        {/* 1. TRAINING BLOCK (The "Need to Haves") */}
+                    <main className="pt-24 px-4 space-y-4 max-w-lg mx-auto pb-safe">
+                        <InstallPrompt />
                         <section>
-                            <div className="flex justify-between items-end mb-2 px-1">
-                                <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-widest">Training</h2>
-                                <span className="text-[10px] text-neon-lime font-bold uppercase border border-neon-lime/30 px-2 rounded-full">D1 Standards</span>
-                            </div>
+                            <div className="flex justify-between items-end mb-2 px-1"><h2 className="text-sm font-bold text-zinc-400 uppercase tracking-widest">Training</h2><span className="text-[10px] text-neon-lime font-bold uppercase border border-neon-lime/30 px-2 rounded-full">D1 Standards</span></div>
                             <div className="grid grid-cols-2 gap-3">
-                                {/* Run Tile */}
-                                <Tile 
-                                    onClick={() => toggleTracker('mileRun')}
-                                    className={`h-40 flex flex-col justify-between transition-colors duration-300 ${trackers.mileRun ? 'bg-neon-lime/10 border-neon-lime/50 glow-lime' : 'bg-zinc-900'}`}
-                                >
-                                    <div className="flex justify-between items-start">
-                                        <div className={`p-2 rounded-full ${trackers.mileRun ? 'bg-neon-lime text-black' : 'bg-zinc-800 text-zinc-400'}`}>
-                                            <Icon name="run" size={20} />
-                                        </div>
-                                        {trackers.mileRun && <Icon name="check" size={20} className="text-neon-lime" />}
-                                    </div>
-                                    <div>
-                                        <div className="text-3xl font-display font-bold uppercase tracking-tighter">1 Mile</div>
-                                        <div className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Daily Cardio</div>
-                                    </div>
-                                </Tile>
-
-                                {/* Session Tile (Opens Modal) */}
-                                <Tile 
-                                    onClick={() => setShowWorkoutModal(true)}
-                                    className={`h-40 flex flex-col justify-between transition-colors duration-300 cursor-pointer ${trackers.strength ? 'bg-neon-lime/10 border-neon-lime/50 glow-lime' : 'bg-zinc-900'}`}
-                                >
-                                    <div className="flex justify-between items-start">
-                                        <div className={`p-2 rounded-full ${trackers.strength ? 'bg-neon-lime text-black' : 'bg-zinc-800 text-zinc-400'}`}>
-                                            <Icon name="dumbbell" size={20} />
-                                        </div>
-                                        {trackers.strength && <Icon name="check" size={20} className="text-neon-lime" />}
-                                    </div>
-                                    <div>
-                                        <div className="text-3xl font-display font-bold uppercase tracking-tighter">Session</div>
-                                        <div className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">
-                                            {trackers.strength ? `${trackers.exercisesCompleted} Exercises Done` : "Start Workout"}
-                                        </div>
-                                    </div>
-                                </Tile>
+                                <Tile onClick={() => toggleTracker('mileRun')} className={`h-40 flex flex-col justify-between transition-colors duration-300 ${trackers.mileRun ? 'bg-neon-lime/10 border-neon-lime/50 glow-lime' : 'bg-zinc-900'}`}><div className="flex justify-between items-start"><div className={`p-2 rounded-full ${trackers.mileRun ? 'bg-neon-lime text-black' : 'bg-zinc-800 text-zinc-400'}`}><Icon name="run" size={20} /></div>{trackers.mileRun && <Icon name="check" size={20} className="text-neon-lime" />}</div><div><div className="text-3xl font-display font-bold uppercase tracking-tighter">1 Mile</div><div className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Daily Cardio</div></div></Tile>
+                                <Tile onClick={() => setShowWorkoutModal(true)} className={`h-40 flex flex-col justify-between transition-colors duration-300 cursor-pointer ${trackers.strength ? 'bg-neon-lime/10 border-neon-lime/50 glow-lime' : 'bg-zinc-900'}`}><div className="flex justify-between items-start"><div className={`p-2 rounded-full ${trackers.strength ? 'bg-neon-lime text-black' : 'bg-zinc-800 text-zinc-400'}`}><Icon name="dumbbell" size={20} /></div>{trackers.strength && <Icon name="check" size={20} className="text-neon-lime" />}</div><div><div className="text-3xl font-display font-bold uppercase tracking-tighter">Session</div><div className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">{trackers.strength ? `${trackers.exercisesCompleted} Exercises Done` : "Start Workout"}</div></div></Tile>
                             </div>
                         </section>
-
-                        {/* 2. PHYSIQUE (Weight Goal) */}
                         <section>
-                            <Tile className="bg-zinc-900">
-                                <div className="flex justify-between items-center mb-4">
-                                    <div className="flex items-center gap-2">
-                                        <div className="bg-zinc-800 p-1.5 rounded-lg text-zinc-400"><Icon name="scale" size={16} /></div>
-                                        <span className="text-sm font-bold text-zinc-400 uppercase tracking-widest">Road to 162</span>
-                                    </div>
-                                    <div className="text-neon-cyan text-xs font-bold uppercase">{userProfile.goalWeight} Goal</div>
-                                </div>
-                                
-                                <div className="flex items-end justify-between mb-2">
-                                    <button onClick={(e) => { e.stopPropagation(); updateWeight(-0.1); }} className="p-3 bg-zinc-800 rounded-xl hover:bg-zinc-700 active:scale-95 text-zinc-400">-</button>
-                                    <div className="flex flex-col items-center">
-                                        <span className="text-5xl font-display font-bold text-white tracking-tighter">{userProfile.weight.toFixed(1)}</span>
-                                        <span className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Current LBS</span>
-                                    </div>
-                                    <button onClick={(e) => { e.stopPropagation(); updateWeight(0.1); }} className="p-3 bg-zinc-800 rounded-xl hover:bg-zinc-700 active:scale-95 text-white">+</button>
-                                </div>
-                                
-                                {/* Visual Gap */}
-                                <div className="w-full bg-zinc-800 h-1.5 rounded-full mt-4 overflow-hidden flex">
-                                    <div className="bg-neon-cyan h-full transition-all duration-500" style={{ width: `${Math.max(0, Math.min(100, (175 - userProfile.weight) / (175 - userProfile.goalWeight) * 100))}%` }}></div>
-                                </div>
-                                <div className="flex justify-between text-[10px] text-zinc-600 font-bold uppercase mt-1">
-                                    <span>Start (175)</span>
-                                    <span>Goal (162)</span>
-                                </div>
-                            </Tile>
+                            <Tile className="bg-zinc-900"><div className="flex justify-between items-center mb-4"><div className="flex items-center gap-2"><div className="bg-zinc-800 p-1.5 rounded-lg text-zinc-400"><Icon name="scale" size={16} /></div><span className="text-sm font-bold text-zinc-400 uppercase tracking-widest">Road to 162</span></div><div className="text-neon-cyan text-xs font-bold uppercase">{userProfile.goalWeight} Goal</div></div><div className="flex items-end justify-between mb-2"><button onClick={(e) => { e.stopPropagation(); updateWeight(-0.1); }} className="p-3 bg-zinc-800 rounded-xl hover:bg-zinc-700 active:scale-95 text-zinc-400">-</button><div className="flex flex-col items-center"><span className="text-5xl font-display font-bold text-white tracking-tighter">{userProfile.weight.toFixed(1)}</span><span className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Current LBS</span></div><button onClick={(e) => { e.stopPropagation(); updateWeight(0.1); }} className="p-3 bg-zinc-800 rounded-xl hover:bg-zinc-700 active:scale-95 text-white">+</button></div><div className="w-full bg-zinc-800 h-1.5 rounded-full mt-4 overflow-hidden flex"><div className="bg-neon-cyan h-full transition-all duration-500" style={{ width: `${Math.max(0, Math.min(100, (175 - userProfile.weight) / (175 - userProfile.goalWeight) * 100))}%` }}></div></div><div className="flex justify-between text-[10px] text-zinc-600 font-bold uppercase mt-1"><span>Start (175)</span><span>Goal (162)</span></div></Tile>
                         </section>
-
-                        {/* 3. NUTRITION (The Grid) */}
                         <section>
-                             <div className="flex justify-between items-end mb-2 px-1">
-                                <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-widest">Fueling</h2>
-                                <div className="flex items-center gap-1 text-[10px] text-neon-orange font-bold uppercase border border-neon-orange/30 px-2 py-0.5 rounded-full">
-                                    <span>⚠️ Low Cholesterol</span>
-                                </div>
-                            </div>
-                            
+                             <div className="flex justify-between items-end mb-2 px-1"><h2 className="text-sm font-bold text-zinc-400 uppercase tracking-widest">Fueling</h2><div className="flex items-center gap-1 text-[10px] text-neon-orange font-bold uppercase border border-neon-orange/30 px-2 py-0.5 rounded-full"><span>⚠️ Low Cholesterol</span></div></div>
                             <Tile className="bg-zinc-900 border-none">
-                                <div className="grid grid-cols-4 gap-2">
-                                    {trackers.meals.map((meal, idx) => (
-                                        <div key={idx} onClick={() => openFoodLog(idx)} className="flex flex-col items-center gap-2 cursor-pointer group">
-                                            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border-2 transition-all duration-300 ${meal.done ? 'bg-neon-orange border-neon-orange text-black' : 'bg-transparent border-zinc-700 text-zinc-600 group-hover:border-zinc-500'}`}>
-                                                <Icon name="bowl" size={20} />
-                                            </div>
-                                            <span className={`text-[10px] font-bold uppercase tracking-wider ${meal.done ? 'text-white' : 'text-zinc-600'}`}>{meal.name}</span>
-                                        </div>
-                                    ))}
-                                </div>
-
-                                <div className="mt-6 pt-4 border-t border-white/5">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-2">
-                                            <div className="text-blue-400"><Icon name="water" size={18} /></div>
-                                            <span className="text-xs font-bold text-zinc-400 uppercase">Hydration</span>
-                                        </div>
-                                        <div className="flex gap-1">
-                                            {[...Array(8)].map((_, i) => (
-                                                <div key={i} className={`w-1.5 h-6 rounded-full ${i < trackers.water ? 'bg-blue-400' : 'bg-zinc-800'}`} />
-                                            ))}
-                                            <button onClick={addWater} className="ml-2 w-6 h-6 bg-zinc-800 rounded flex items-center justify-center text-blue-400 text-xs hover:bg-zinc-700">+</button>
-                                        </div>
-                                    </div>
-                                </div>
+                                <div className="grid grid-cols-4 gap-2">{trackers.meals.map((meal, idx) => (<div key={idx} onClick={() => openFoodLog(idx)} className="flex flex-col items-center gap-2 cursor-pointer group"><div className={`w-14 h-14 rounded-2xl flex items-center justify-center border-2 transition-all duration-300 ${meal.done ? 'bg-neon-orange border-neon-orange text-black' : 'bg-transparent border-zinc-700 text-zinc-600 group-hover:border-zinc-500'}`}><Icon name="bowl" size={20} /></div><span className={`text-[10px] font-bold uppercase tracking-wider ${meal.done ? 'text-white' : 'text-zinc-600'}`}>{meal.name}</span></div>))}</div>
+                                <div className="mt-6 pt-4 border-t border-white/5"><div className="flex items-center justify-between"><div className="flex items-center gap-2"><div className="text-blue-400"><Icon name="water" size={18} /></div><span className="text-xs font-bold text-zinc-400 uppercase">Hydration</span></div><div className="flex gap-1">{[...Array(8)].map((_, i) => (<div key={i} className={`w-1.5 h-6 rounded-full ${i < trackers.water ? 'bg-blue-400' : 'bg-zinc-800'}`} />))}<button onClick={addWater} className="ml-2 w-6 h-6 bg-zinc-800 rounded flex items-center justify-center text-blue-400 text-xs hover:bg-zinc-700">+</button></div></div></div>
                             </Tile>
                         </section>
-
-                        {/* 4. MIND (Focus) */}
                         <section className="grid grid-cols-1 gap-3">
-                             <div className="flex justify-between items-end px-1">
-                                <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-widest">Mental Reps</h2>
-                            </div>
-
-                            {/* Devotional Toggle */}
-                            <Tile 
-                                onClick={() => toggleTracker('devotional')}
-                                className={`flex items-center justify-between py-4 transition-colors ${trackers.devotional ? 'bg-zinc-800 border-l-4 border-l-white' : 'bg-zinc-900 border-l-4 border-l-transparent'}`}
-                            >
-                                <div className="flex items-center gap-4">
-                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${trackers.devotional ? 'bg-white text-black' : 'bg-zinc-800 text-zinc-500'}`}>
-                                        <Icon name="book" size={18} />
-                                    </div>
-                                    <div>
-                                        <div className={`font-display font-bold text-xl uppercase ${trackers.devotional ? 'text-white' : 'text-zinc-500'}`}>Devotional</div>
-                                        <div className="text-[10px] font-bold uppercase text-zinc-600">Spirit & Focus</div>
-                                    </div>
-                                </div>
-                                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${trackers.devotional ? 'bg-white border-white' : 'border-zinc-700'}`}>
-                                    {trackers.devotional && <Icon name="check" size={14} className="text-black" />}
-                                </div>
-                            </Tile>
-
-                            {/* Reading Slider */}
-                            <Tile className="bg-zinc-900">
-                                <div className="flex justify-between items-center mb-2">
-                                    <span className="text-xs font-bold uppercase text-zinc-400">{userProfile.currentBook}</span>
-                                    <span className="text-xs font-bold text-white">{trackers.pagesRead} <span className="text-zinc-500">/ {userProfile.readGoal} PGS</span></span>
-                                </div>
-                                <input 
-                                    type="range" 
-                                    min="0" 
-                                    max="50" 
-                                    value={trackers.pagesRead} 
-                                    onChange={(e) => updateTrackers({...trackers, pagesRead: parseInt(e.target.value)})} 
-                                />
-                                <div className="flex justify-between mt-4">
-                                    <button onClick={() => updateTrackers({...trackers, pagesRead: Math.max(0, trackers.pagesRead - 5)})} className="text-xs font-bold text-zinc-500 uppercase px-4 py-2 bg-zinc-800 rounded-lg">-5</button>
-                                    <button onClick={() => updateTrackers({...trackers, pagesRead: trackers.pagesRead + 5})} className="text-xs font-bold text-black uppercase px-4 py-2 bg-white rounded-lg">+5</button>
-                                </div>
-                            </Tile>
+                             <div className="flex justify-between items-end px-1"><h2 className="text-sm font-bold text-zinc-400 uppercase tracking-widest">Mental Reps</h2></div>
+                            <Tile onClick={() => toggleTracker('devotional')} className={`flex items-center justify-between py-4 transition-colors ${trackers.devotional ? 'bg-zinc-800 border-l-4 border-l-white' : 'bg-zinc-900 border-l-4 border-l-transparent'}`}><div className="flex items-center gap-4"><div className={`w-10 h-10 rounded-full flex items-center justify-center ${trackers.devotional ? 'bg-white text-black' : 'bg-zinc-800 text-zinc-500'}`}><Icon name="book" size={18} /></div><div><div className={`font-display font-bold text-xl uppercase ${trackers.devotional ? 'text-white' : 'text-zinc-500'}`}>Devotional</div><div className="text-[10px] font-bold uppercase text-zinc-600">Spirit & Focus</div></div></div><div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${trackers.devotional ? 'bg-white border-white' : 'border-zinc-700'}`}>{trackers.devotional && <Icon name="check" size={14} className="text-black" />}</div></Tile>
+                            <Tile className="bg-zinc-900"><div className="flex justify-between items-center mb-2"><span className="text-xs font-bold uppercase text-zinc-400">{userProfile.currentBook}</span><span className="text-xs font-bold text-white">{trackers.pagesRead} <span className="text-zinc-500">/ {userProfile.readGoal} PGS</span></span></div><input type="range" min="0" max="50" value={trackers.pagesRead} onChange={(e) => updateTrackers({...trackers, pagesRead: parseInt(e.target.value)})} /><div className="flex justify-between mt-4"><button onClick={() => updateTrackers({...trackers, pagesRead: Math.max(0, trackers.pagesRead - 5)})} className="text-xs font-bold text-zinc-500 uppercase px-4 py-2 bg-zinc-800 rounded-lg">-5</button><button onClick={() => updateTrackers({...trackers, pagesRead: trackers.pagesRead + 5})} className="text-xs font-bold text-black uppercase px-4 py-2 bg-white rounded-lg">+5</button></div></Tile>
                         </section>
-                        
                     </main>
-
-                    {/* Modals */}
-                    {showWorkoutModal && (
-                        <WorkoutOverlay 
-                            onClose={() => setShowWorkoutModal(false)}
-                            onComplete={handleSessionComplete}
-                        />
-                    )}
-
-                    {showFoodModal && (
-                        <FoodLogOverlay 
-                            mealName={trackers.meals[activeMealIndex].name}
-                            onClose={() => setShowFoodModal(false)}
-                            onSave={handleFoodSave}
-                        />
-                    )}
+                    {showWorkoutModal && (<WorkoutOverlay onClose={() => setShowWorkoutModal(false)} onComplete={handleSessionComplete} customExercises={userProfile.customExercises} onAddExercise={handleAddExercise} />)}
+                    {showFoodModal && (<FoodLogOverlay mealName={trackers.meals[activeMealIndex].name} onClose={() => setShowFoodModal(false)} onSave={handleFoodSave} />)}
                 </div>
             );
         }
